@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MemberList } from './MemberList';
 import { MemberDetail } from './MemberDetail';
 import { MemberForm } from './MemberForm';
+import { supabase } from '../lib/supabase';
 
 interface Member {
   id: string;
@@ -23,6 +24,20 @@ type ViewMode = 'list' | 'detail' | 'add' | 'edit';
 export function MemberManagement() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+
+  useEffect(() => {
+    fetchMembers();
+  }, []);
+
+  const fetchMembers = async () => {
+    const { data, error } = await supabase.from('members').select('*');
+    if (error) {
+      console.error('Error fetching members:', error);
+    } else {
+      setMembers(data as Member[] || []);
+    }
+  };
 
   const handleSelectMember = (member: Member) => {
     setSelectedMember(member);
@@ -43,15 +58,26 @@ export function MemberManagement() {
     setViewMode('list');
   };
 
-  const handleSaveMember = (memberData: Partial<Member>) => {
-    // In a real app, this would save to backend
-    console.log('Saving member:', memberData);
-    alert(viewMode === 'add' ? 'Member added successfully!' : 'Member updated successfully!');
-    setViewMode('list');
+  const handleSaveMember = async (memberData: Partial<Member>) => {
+    try {
+      if (viewMode === 'add') {
+        const { error } = await supabase.from('members').insert([memberData]);
+        if (error) throw error;
+        alert('Member added successfully!');
+      } else if (selectedMember) {
+        const { error } = await supabase.from('members').update(memberData).eq('id', selectedMember.id);
+        if (error) throw error;
+        alert('Member updated successfully!');
+      }
+      fetchMembers();
+      setViewMode('list');
+    } catch (error: any) {
+      alert('Error saving member: ' + error.message);
+    }
   };
 
   if (viewMode === 'list') {
-    return <MemberList onSelectMember={handleSelectMember} onAddMember={handleAddMember} />;
+    return <MemberList members={members} onSelectMember={handleSelectMember} onAddMember={handleAddMember} />;
   }
 
   if (viewMode === 'detail' && selectedMember) {
@@ -66,5 +92,5 @@ export function MemberManagement() {
     return <MemberForm member={selectedMember} onBack={() => setViewMode('detail')} onSave={handleSaveMember} />;
   }
 
-  return <MemberList onSelectMember={handleSelectMember} onAddMember={handleAddMember} />;
+  return <MemberList members={members} onSelectMember={handleSelectMember} onAddMember={handleAddMember} />;
 }

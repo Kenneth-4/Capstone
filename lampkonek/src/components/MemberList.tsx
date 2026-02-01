@@ -13,81 +13,21 @@ interface Member {
 }
 
 interface MemberListProps {
+  members: Member[];
   onSelectMember: (member: Member) => void;
   onAddMember: () => void;
 }
 
-export function MemberList({ onSelectMember, onAddMember }: MemberListProps) {
+export function MemberList({ members, onSelectMember, onAddMember }: MemberListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCluster, setFilterCluster] = useState<string>('all');
 
-  const members: Member[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john.doe@email.com',
-      phone: '+63 912 345 6789',
-      cluster: 'Cluster A',
-      ministry: 'Worship Team',
-      status: 'Active',
-      joinDate: '2023-01-15',
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane.smith@email.com',
-      phone: '+63 923 456 7890',
-      cluster: 'Cluster B',
-      ministry: 'Youth Ministry',
-      status: 'Active',
-      joinDate: '2023-02-20',
-    },
-    {
-      id: '3',
-      name: 'Maria Santos',
-      email: 'maria.santos@email.com',
-      phone: '+63 934 567 8901',
-      cluster: 'Cluster A',
-      ministry: 'Children Ministry',
-      status: 'Active',
-      joinDate: '2023-03-10',
-    },
-    {
-      id: '4',
-      name: 'Pedro Cruz',
-      email: 'pedro.cruz@email.com',
-      phone: '+63 945 678 9012',
-      cluster: 'Cluster C',
-      ministry: 'Media Team',
-      status: 'Inactive',
-      joinDate: '2022-11-05',
-    },
-    {
-      id: '5',
-      name: 'Anna Reyes',
-      email: 'anna.reyes@email.com',
-      phone: '+63 956 789 0123',
-      cluster: 'Cluster B',
-      ministry: 'Hospitality',
-      status: 'Active',
-      joinDate: '2023-04-18',
-    },
-    {
-      id: '6',
-      name: 'Mark Garcia',
-      email: 'mark.garcia@email.com',
-      phone: '+63 967 890 1234',
-      cluster: 'Cluster A',
-      ministry: 'Ushering',
-      status: 'Visitor',
-      joinDate: '2024-11-30',
-    },
-  ];
+  // Static data removed, using members prop
 
   const filteredMembers = members.filter((member) => {
     const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchTerm.toLowerCase());
+      member.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || member.status === filterStatus;
     const matchesCluster = filterCluster === 'all' || member.cluster === filterCluster;
     return matchesSearch && matchesStatus && matchesCluster;
@@ -118,7 +58,7 @@ export function MemberList({ onSelectMember, onAddMember }: MemberListProps) {
       <div className="flex items-center justify-between">
         <h1 className="font-['Montserrat:Bold',sans-serif] text-[32px] text-[#151619]">Member Management</h1>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={onAddMember}
             className="flex items-center gap-2 px-6 py-3 bg-[#6d8aff] text-white rounded-lg hover:bg-[#5a75e6] transition-colors"
           >

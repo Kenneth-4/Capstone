@@ -1,11 +1,15 @@
 import svgPaths from "../imports/svg-r0cmz1jz6d";
-import img4652293918745592847665684231656082395705280NRemovebgPreview1 from "figma:asset/696ba903fc58e6831916a7916f14a4406c36dbe5.png";
-import imgImage25 from "figma:asset/33a862d7a5675178d29adab8ee097ff097d6669d.png";
-import imgImage26 from "figma:asset/89c01aa72e7f571404d27748c22db21614e2944c.png";
+
+// Replaced invalid figma imports with placeholders or comments
+// import img4652293918745592847665684231656082395705280NRemovebgPreview1 from "figma:asset/696ba903fc58e6831916a7916f14a4406c36dbe5.png";
+// import imgImage25 from "figma:asset/33a862d7a5675178d29adab8ee097ff097d6669d.png";
+// import imgImage26 from "figma:asset/89c01aa72e7f571404d27748c22db21614e2944c.png";
 
 interface SidebarProps {
   currentPage: string;
+  userRole: string; // Added userRole
   onNavigate: (page: string) => void;
+  onSignOut?: () => void; // Added trigger for sign out
 }
 
 function DashboardIcon() {
@@ -25,7 +29,8 @@ function DashboardIcon() {
 function MemberIcon() {
   return (
     <div className="absolute left-[42px] size-[24px] top-[306px]">
-      <img alt="" className="absolute inset-0 max-w-none object-50%-50% object-cover pointer-events-none size-full" src={imgImage26} />
+      {/* Placeholder for missing asset */}
+      <div className="size-full bg-gray-200 rounded-full" />
     </div>
   );
 }
@@ -105,16 +110,26 @@ function LogoutIcon() {
   );
 }
 
-export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', top: '158px' },
-    { id: 'attendance', label: 'Attendance', top: '226px' },
-    { id: 'member', label: 'Member', top: '294px' },
-    { id: 'reservation', label: 'Reservation', top: '362px' },
-    { id: 'reports', label: 'Reports', top: '430px' },
-    { id: 'settings', label: 'Settings', top: '492px' },
-    { id: 'profile', label: 'My Profile', top: '560px' },
+export function Sidebar({ currentPage, userRole, onNavigate, onSignOut }: SidebarProps) {
+  const allMenuItems = [
+    { id: 'dashboard', label: 'Dashboard', top: '158px', roles: ['admin', 'ministry_leader', 'volunteer', 'member'] },
+    { id: 'attendance', label: 'Attendance', top: '226px', roles: ['admin', 'ministry_leader', 'volunteer'] },
+    { id: 'member', label: 'Member', top: '294px', roles: ['admin', 'ministry_leader'] },
+    { id: 'reservation', label: 'Reservation', top: '362px', roles: ['admin', 'member'] },
+    { id: 'reports', label: 'Reports', top: '430px', roles: ['admin', 'ministry_leader'] },
+    { id: 'settings', label: 'Settings', top: '492px', roles: ['admin'] },
+    { id: 'profile', label: 'My Profile', top: '560px', roles: ['admin', 'ministry_leader', 'volunteer', 'member'] },
   ];
+
+  // Filter menu items based on role
+  // Default to 'member' if no role provided, or treat 'admin' as superuser
+  const normalizedRole = userRole?.toLowerCase().replace(' ', '_') || 'member';
+
+  const menuItems = allMenuItems.filter(item => {
+    // Admin sees everything
+    if (normalizedRole === 'admin') return true;
+    return item.roles.includes(normalizedRole);
+  });
 
   return (
     <div className="absolute bg-white h-[1080px] left-0 overflow-clip top-0 w-[222px]">
@@ -124,11 +139,8 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
           LAMPKONEK
         </p>
         <div className="absolute h-[94px] left-[66px] top-[6px] w-[93px]">
-          <img
-            alt=""
-            className="absolute inset-0 max-w-none object-50%-50% object-cover pointer-events-none size-full"
-            src={img4652293918745592847665684231656082395705280NRemovebgPreview1}
-          />
+          {/* Missing asset placeholder */}
+          <div className="size-full bg-blue-500 rounded-full opacity-20" />
         </div>
       </div>
 
@@ -139,26 +151,21 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
           <button
             key={item.id}
             onClick={() => onNavigate(item.id)}
-            className={`absolute h-[48px] left-0 overflow-clip w-[222px] ${
-              isActive ? 'bg-[#6d8aff]' : 'bg-white hover:bg-gray-50'
-            }`}
+            className={`absolute h-[48px] left-0 overflow-clip w-[222px] ${isActive ? 'bg-[#6d8aff]' : 'bg-white hover:bg-gray-50'
+              }`}
             style={{ top: item.top }}
           >
             <p
-              className={`absolute font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[1.4] left-[85px] text-[16px] text-nowrap top-[12px] whitespace-pre ${
-                isActive ? 'text-white' : 'text-black'
-              }`}
+              className={`absolute font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[1.4] left-[85px] text-[16px] text-nowrap top-[12px] whitespace-pre ${isActive ? 'text-white' : 'text-black'
+                }`}
             >
               {item.label}
             </p>
             {item.id === 'dashboard' && <DashboardIcon />}
             {item.id === 'attendance' && (
               <div className="absolute left-[40px] size-[24px] top-[12px]">
-                <img
-                  alt=""
-                  className="absolute inset-0 max-w-none object-50%-50% object-cover pointer-events-none size-full"
-                  src={imgImage25}
-                />
+                {/* Placeholder */}
+                <div className={`size-3 rounded-full ${isActive ? 'bg-white' : 'bg-gray-400'}`}></div>
               </div>
             )}
             {item.id === 'member' && <MemberIcon />}
@@ -172,7 +179,10 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
 
       {/* Log Out Button */}
       <button
-        onClick={() => alert('Logging out...')}
+        onClick={() => {
+          if (onSignOut) onSignOut();
+          else alert('Logging out...');
+        }}
         className="absolute bg-white hover:bg-gray-50 h-[48px] left-0 overflow-clip top-[931px] w-[222px]"
       >
         <p className="absolute font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[1.4] left-[85px] text-[16px] text-black text-nowrap top-[12px] whitespace-pre">
