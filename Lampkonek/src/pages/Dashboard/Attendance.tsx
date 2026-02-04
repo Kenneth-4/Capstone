@@ -9,9 +9,10 @@ import {
     Edit2,
     Moon,
     User,
-    Bell,
-    Settings as SettingsIcon
+    Bell
 } from 'lucide-react';
+import { useState } from 'react';
+import { TakeAttendanceModal } from './TakeAttendanceModal';
 import './Attendance.css';
 
 const attendanceData = [
@@ -23,6 +24,8 @@ const attendanceData = [
 ];
 
 export const Attendance = () => {
+    const [isTakeAttendanceOpen, setIsTakeAttendanceOpen] = useState(false);
+
     return (
         <div className="attendance-content">
             {/* Header */}
@@ -60,7 +63,7 @@ export const Attendance = () => {
                         <Download size={16} />
                         Export CSV
                     </button>
-                    <button className="take-attendance-btn">
+                    <button className="take-attendance-btn" onClick={() => setIsTakeAttendanceOpen(true)}>
                         <Plus size={16} />
                         Take Attendance
                     </button>
@@ -173,6 +176,7 @@ export const Attendance = () => {
                     </div>
                 </div>
             </div>
+            <TakeAttendanceModal isOpen={isTakeAttendanceOpen} onClose={() => setIsTakeAttendanceOpen(false)} />
         </div>
     );
 };

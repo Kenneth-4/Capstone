@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { LayoutDashboard, Users, User, Calendar, BarChart, Settings, LogOut, UserCircle, Moon, CheckSquare, Clock, Activity, UserPlus, TrendingUp } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import './Dashboard.css';
+import toast from 'react-hot-toast';
 import './Dashboard.css';
 import { Members } from './Members';
 import { Attendance } from './Attendance';
@@ -32,14 +32,24 @@ export const Dashboard = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('Dashboard');
     const [reportType, setReportType] = useState('Attendance'); // 'Attendance' | 'Members'
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const handleLogout = () => {
-        // Here you would clear auth tokens etc
-        navigate('/login');
+        setIsLoggingOut(true);
+        // Simulate loading delay for better UX
+        setTimeout(() => {
+            toast.success('You have successfully logged out');
+            navigate('/login');
+        }, 1500);
     };
 
     return (
         <div className="dashboard-container">
+            {isLoggingOut && (
+                <div className="logout-progress-bar">
+                    <div className="progress"></div>
+                </div>
+            )}
             {/* Sidebar */}
             <aside className="sidebar">
                 <div className="sidebar-header">
