@@ -1,0 +1,291 @@
+/* src/pages/Dashboard/Reservation.css */
+
+.reservation-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Controls */
+.reservation-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.res-search-input {
+    width: 320px;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3e%3c/path%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: left 0.75rem center;
+    background-size: 1.25rem;
+}
+
+.res-search-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.add-res-btn {
+    background-color: #6366f1;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.add-res-btn:hover {
+    background-color: #4f46e5;
+}
+
+/* Stats Cards */
+.res-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+.res-stat-card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #f3f4f6;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.res-stat-title {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.res-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+/* Main Layout Grid */
+.res-main-layout {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 1.5rem;
+}
+
+/* Calendar Card */
+.calendar-card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    height: fit-content;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.calendar-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #111827;
+}
+
+.calendar-nav-title {
+    font-weight: 700;
+    color: #374151;
+}
+
+.calendar-nav-btns {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.c-nav-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    color: #6b7280;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    row-gap: 0.5rem;
+    text-align: center;
+}
+
+.c-day-label {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.c-date {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: #374151;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.c-date:hover:not(.active) {
+    background-color: #f3f4f6;
+}
+
+.c-date.active {
+    background-color: #6366f1;
+    color: white;
+}
+
+/* Upcoming Reservations List */
+.upcoming-section {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.res-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.res-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1px;
+    /* border hack mostly handled by internal padding */
+    border: 1px solid #f3f4f6;
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.2s;
+}
+
+.res-card:hover {
+    border-color: #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.res-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.icon-green {
+    background-color: #ecfdf5;
+    color: #10b981;
+}
+
+.icon-orange {
+    background-color: #fffbeb;
+    color: #f59e0b;
+}
+
+.icon-blue {
+    background-color: #eff6ff;
+    color: #3b82f6;
+}
+
+/* Not used in mock but good to have */
+
+.res-details {
+    flex: 1;
+}
+
+.res-name {
+    font-weight: 700;
+    color: #1f2937;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.res-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+    flex-wrap: wrap;
+}
+
+.res-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.res-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+}
+
+.badge-approved {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.badge-pending {
+    background-color: #ffedd5;
+    color: #9a3412;
+}
+
+@media (max-width: 1024px) {
+    .res-main-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .res-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

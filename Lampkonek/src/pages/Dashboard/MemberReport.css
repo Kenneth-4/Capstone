@@ -1,0 +1,218 @@
+/* src/pages/Dashboard/MemberReport.css */
+
+.member-report-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Controls Row */
+.mr-controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mr-filters {
+    display: flex;
+    gap: 1rem;
+}
+
+.mr-select {
+    padding: 0.6rem 2.5rem 0.6rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: white;
+    font-size: 0.9rem;
+    color: #374151;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3e%3c/path%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    cursor: pointer;
+}
+
+/* Stats Row */
+.mr-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+}
+
+.mr-stat-card {
+    background-color: white;
+    padding: 1.25rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.mr-stat-title {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.mr-stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.25rem;
+}
+
+.mr-stat-meta {
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.meta-green {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.meta-gray {
+    color: #9ca3af;
+}
+
+/* Charts Row */
+.mr-charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 1.5rem;
+}
+
+.mr-chart-card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.mr-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.mr-chart-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.mr-link {
+    font-size: 0.8rem;
+    color: #6366f1;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.mr-pie-content {
+    display: flex;
+    align-items: center;
+}
+
+.mr-legend {
+    margin-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #374151;
+}
+
+.leg-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.leg-val {
+    margin-left: auto;
+    font-weight: 600;
+    padding-left: 1rem;
+}
+
+/* List Section */
+.mr-list-section {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+}
+
+.mr-list-header {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 1.5rem;
+}
+
+.mr-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.mr-table th {
+    text-align: left;
+    padding: 1rem 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6b7280;
+    border-bottom: 1px solid #f3f4f6;
+    background-color: #fafafa;
+    padding-left: 1.5rem;
+}
+
+.mr-table td {
+    padding: 1rem 0;
+    padding-left: 1.5rem;
+    font-size: 0.9rem;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.status-pill {
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.st-active {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.st-inactive {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+@media (max-width: 1200px) {
+    .mr-stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .mr-charts-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,406 @@
+/* src/pages/Dashboard/Attendance.css */
+
+.attendance-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Header Actions */
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.export-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.export-btn:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.take-attendance-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #6366f1;
+    color: white;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.take-attendance-btn:hover {
+    background-color: #4f46e5;
+}
+
+/* Filter Controls */
+.attendance-controls-card {
+    background-color: white;
+    padding: 1rem;
+    /* Reduced padding from image implication */
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    /* Subtle shadow per image usually */
+    /* Wait, image shows controls above table, maybe not in a card? 
+       Actually image looks like controls are just floating or in a container. 
+       Let's stick to the container from Members style but adapted.
+       Actually, looking at the image, there is a big white card containing the table and the controls are inside it or above it?
+       Ah, the image shows a white background for the WHOLE list section potentially. 
+       Let's wrap table + controls in one white card as seen in typical dashboards.
+    */
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.attendance-filters {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    background: white;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid #f3f4f6;
+    /* Subtle border if standalone */
+}
+
+/* Re-analyzing image: The controls seem to be in their own row, standalone. The table is below. */
+
+.controls-row {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+}
+
+.filter-search {
+    flex: 1;
+    position: relative;
+}
+
+.filter-search input {
+    width: 100%;
+    padding: 0.65rem 1rem 0.65rem 2.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+    color: #374151;
+}
+
+.filter-search svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
+.filter-select-wrapper {
+    position: relative;
+    min-width: 140px;
+}
+
+.filter-select-input {
+    width: 100%;
+    padding: 0.65rem 2rem 0.65rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #374151;
+    background-color: #f9fafb;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3e%3c/path%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+}
+
+.filter-date {
+    display: flex;
+    align-items: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    padding: 0 0.5rem;
+    color: #374151;
+}
+
+.filter-date input {
+    border: none;
+    background: transparent;
+    padding: 0.65rem 0.5rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: #374151;
+    outline: none;
+}
+
+.filter-icon-btn {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    color: #4b5563;
+    cursor: pointer;
+}
+
+/* Table Section */
+.attendance-table-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 0;
+    overflow: hidden;
+}
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.attendance-table th {
+    text-align: left;
+    padding: 1.25rem 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6b7280;
+    border-bottom: 1px solid #f3f4f6;
+    background-color: #fafafa;
+    /* Image has very light header bg maybe? Or white. Let's stick to simple. */
+    background-color: white;
+    /* Image looks white header */
+}
+
+.attendance-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+    color: #1f2937;
+    font-size: 0.95rem;
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.avatar-purple {
+    background-color: #e0e7ff;
+    color: #4338ca;
+}
+
+.avatar-orange {
+    background-color: #ffedd5;
+    color: #9a3412;
+}
+
+.avatar-blue {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.avatar-pink {
+    background-color: #fce7f3;
+    color: #9d174d;
+}
+
+.avatar-red {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.pill-present {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.pill-absent {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.dot-present {
+    background-color: #166534;
+}
+
+.dot-absent {
+    background-color: #991b1b;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: color 0.2s;
+}
+
+.action-btn:hover {
+    color: #6366f1;
+    background-color: #f3f4f6;
+}
+
+/* Footer Section */
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.showing-text {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.per-page {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.per-page select {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    color: #374151;
+    outline: none;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.page-num {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #4b5563;
+    background: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.page-num:hover {
+    background-color: #f3f4f6;
+}
+
+.page-num.active {
+    background-color: #6366f1;
+    color: white;
+}
+
+.page-nav-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background-color: white;
+    cursor: pointer;
+    color: #6b7280;
+}
+
+.page-nav-btn:hover {
+    background-color: #f9fafb;
+}
+
+/* Legend Footer */
+.attendance-summary {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem 1.5rem;
+    /* Matches image footer placement below table card or inside? Inside card usually or just below. Let's put inside card at very bottom. */
+    background-color: #f9fafb;
+    /* Different bg for footer area? Image shows white. */
+    background-color: white;
+    border-top: 1px solid #f3f4f6;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #4b5563;
+}
+
+.summary-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}

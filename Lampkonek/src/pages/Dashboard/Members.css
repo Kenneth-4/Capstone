@@ -1,0 +1,289 @@
+/* src/pages/Dashboard/Members.css */
+
+.members-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Controls Bar */
+.members-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.search-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.search-box {
+    position: relative;
+    max-width: 320px;
+    width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.65rem 1rem 0.65rem 2.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.dropdown-filter {
+    position: relative;
+}
+
+.filter-select {
+    appearance: none;
+    background-color: #6366f1;
+    color: white;
+    padding: 0.65rem 2.5rem 0.65rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3e%3c/path%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+}
+
+.filter-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #4b5563;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.add-member-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #6366f1;
+    color: white;
+    border: none;
+    padding: 0.65rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.add-member-btn:hover {
+    background-color: #4f46e5;
+}
+
+/* Table */
+.table-container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    overflow-x: auto;
+}
+
+.members-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.members-table th {
+    text-align: left;
+    padding: 1rem 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6b7280;
+    border-bottom: 1px solid #f3f4f6;
+    background-color: #fafafa;
+    white-space: nowrap;
+}
+
+.members-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    color: #374151;
+    font-size: 0.95rem;
+    vertical-align: middle;
+}
+
+.members-table tr:last-child td {
+    border-bottom: none;
+}
+
+.members-table tr:hover td {
+    background-color: #f9fafb;
+}
+
+.sort-icon {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 0.25rem;
+    opacity: 0.5;
+}
+
+.member-name {
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background-color: #dcfce7; /* Green-100 */
+    color: #166534; /* Green-800 */
+}
+
+.status-inactive {
+    background-color: #fee2e2; /* Red-100 */
+    color: #991b1b; /* Red-800 */
+}
+
+.status-semi-active {
+    background-color: #ffedd5; /* Orange-100 */
+    color: #9a3412; /* Orange-800 */
+}
+
+.status-transferred {
+    background-color: #fef08a; /* Yellow-200 */
+    color: #854d0e; /* Yellow-800 */
+}
+
+.status-deceased {
+    background-color: #f1f5f9; /* Slate-100 */
+    color: #475569; /* Slate-600 */
+}
+
+.status-visitor {
+    background-color: #fef9c3; /* Yellow-100 */
+    color: #854d0e; /* Yellow-800 */
+}
+
+.action-link {
+    color: #6366f1;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.action-link:hover {
+    text-decoration: underline;
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f3f4f6;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.per-page-select {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.page-select-input {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    color: #374151;
+    outline: none;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e5e7eb;
+    background-color: white;
+    border-radius: 6px;
+    color: #4b5563;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.page-btn.active {
+    background-color: #6366f1;
+    color: white;
+    border-color: #6366f1;
+}
+
+.page-btn:disabled {
+    color: #d1d5db;
+    cursor: not-allowed;
+    background-color: #f9fafb;
+}
+
+.pagination-info {
+    font-size: 0.85rem;
+    color: #6b7280;
+    background-color: #f3f4f6;
+    padding: 0.25rem 1rem;
+    border-radius: 9999px;
+}
