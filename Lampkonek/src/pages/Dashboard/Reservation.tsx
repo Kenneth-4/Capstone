@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
     Moon,
     User,
@@ -13,6 +14,7 @@ import {
     User as UserIcon
 } from 'lucide-react';
 import './Reservation.css';
+import { NewReservationModal } from './NewReservationModal';
 
 // Mock Data
 const upcomingReservations = [
@@ -73,6 +75,8 @@ const dates = [
 ];
 
 export const Reservation = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     return (
         <div className="reservation-content">
             {/* Header */}
@@ -102,7 +106,7 @@ export const Reservation = () => {
                 {/* Controls */}
                 <div className="reservation-controls">
                     <input type="text" className="res-search-input" placeholder="Search by ID or Type..." />
-                    <button className="add-res-btn">
+                    <button className="add-res-btn" onClick={() => setIsModalOpen(true)}>
                         <Plus size={18} />
                         Add Reservation
                     </button>
@@ -192,6 +196,8 @@ export const Reservation = () => {
                     </div>
                 </div>
             </div>
+
+            <NewReservationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </div>
     );
 };

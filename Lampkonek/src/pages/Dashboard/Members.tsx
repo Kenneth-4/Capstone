@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
     Search,
     Filter,
@@ -10,6 +11,7 @@ import {
     Settings
 } from 'lucide-react';
 import './Members.css';
+import { AddMemberModal } from './AddMemberModal';
 
 // Mock Data
 const membersData = [
@@ -38,6 +40,8 @@ const getStatusClass = (status: string) => {
 };
 
 export const Members = () => {
+    const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+
     return (
         <div className="members-content">
             {/* Header */}
@@ -85,7 +89,7 @@ export const Members = () => {
                         </button>
                     </div>
 
-                    <button className="add-member-btn">
+                    <button className="add-member-btn" onClick={() => setIsAddMemberOpen(true)}>
                         <Plus size={18} />
                         ADD NEW MEMBER
                     </button>
@@ -157,6 +161,8 @@ export const Members = () => {
                     </div>
                 </div>
             </div>
+
+            <AddMemberModal isOpen={isAddMemberOpen} onClose={() => setIsAddMemberOpen(false)} />
         </div>
     );
 };
