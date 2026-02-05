@@ -158,6 +158,7 @@ export const Signup = () => {
                             >
                                 <option value="" disabled>Select your role</option>
                                 <option value="member">Member</option>
+                                <option value="logistics">Logistics</option>
                                 <option value="volunteer">Volunteer</option>
                                 <option value="ministry_leader">Ministry Leader</option>
                                 <option value="administrator">Administrator</option>
