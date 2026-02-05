@@ -9,10 +9,13 @@ import {
     Edit2,
     Moon,
     User,
-    Bell
+    Bell,
+    CheckSquare
 } from 'lucide-react';
 import { useState } from 'react';
 import { TakeAttendanceModal } from './TakeAttendanceModal';
+import { AttendanceChecklistModal } from './AttendanceChecklistModal';
+import { AddAttendanceModal } from './AddAttendanceModal';
 import './Attendance.css';
 
 const attendanceData = [
@@ -25,6 +28,8 @@ const attendanceData = [
 
 export const Attendance = () => {
     const [isTakeAttendanceOpen, setIsTakeAttendanceOpen] = useState(false);
+    const [isChecklistOpen, setIsChecklistOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     return (
         <div className="attendance-content">
@@ -58,12 +63,16 @@ export const Attendance = () => {
 
             <div className="attendance-container">
                 {/* Actions & Filters */}
-                <div className="header-actions" style={{ justifyContent: 'flex-end', marginBottom: '-0.5rem' }}>
+                <div className="header-actions" style={{ justifyContent: 'flex-end', marginBottom: '-0.5rem', gap: '0.75rem' }}>
                     <button className="export-btn">
                         <Download size={16} />
                         Export CSV
                     </button>
-                    <button className="take-attendance-btn" onClick={() => setIsTakeAttendanceOpen(true)}>
+                    <button className="checklist-btn" onClick={() => setIsChecklistOpen(true)} style={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', color: '#374151', padding: '0.65rem 1rem', borderRadius: '8px', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <CheckSquare size={16} />
+                        Checklist
+                    </button>
+                    <button className="take-attendance-btn" onClick={() => setIsAddModalOpen(true)}>
                         <Plus size={16} />
                         Take Attendance
                     </button>
@@ -177,6 +186,8 @@ export const Attendance = () => {
                 </div>
             </div>
             <TakeAttendanceModal isOpen={isTakeAttendanceOpen} onClose={() => setIsTakeAttendanceOpen(false)} />
+            <AttendanceChecklistModal isOpen={isChecklistOpen} onClose={() => setIsChecklistOpen(false)} />
+            <AddAttendanceModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
         </div>
     );
 };
