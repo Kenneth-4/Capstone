@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Users, User, Calendar, BarChart, Settings, LogOut, UserCircle, Moon, CheckSquare, Clock, Activity, UserPlus, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Users, User, Calendar, BarChart, Settings, LogOut, UserCircle, Moon, CheckSquare, Clock, Activity, UserPlus, TrendingUp, Bell, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -33,6 +33,7 @@ export const Dashboard = () => {
     const [activeTab, setActiveTab] = useState('Dashboard');
     const [reportType, setReportType] = useState('Attendance'); // 'Attendance' | 'Members'
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [showAnnouncement, setShowAnnouncement] = useState(true);
 
     const handleLogout = () => {
         setIsLoggingOut(true);
@@ -173,6 +174,24 @@ export const Dashboard = () => {
                                 </div>
                             </div>
                         </header>
+
+                        {/* Announcement Banner */}
+                        {showAnnouncement && (
+                            <div className="announcement-banner">
+                                <div className="announcement-content">
+                                    <div className="announcement-icon">
+                                        <Bell size={20} />
+                                    </div>
+                                    <div className="announcement-text">
+                                        <span className="announcement-title">New Announcement:</span>
+                                        <span>Upcoming Ministry Leaders Meeting scheduled for this Friday at 5:00 PM.</span>
+                                    </div>
+                                </div>
+                                <button className="announcement-close" onClick={() => setShowAnnouncement(false)}>
+                                    <X size={18} />
+                                </button>
+                            </div>
+                        )}
 
                         {/* Stats Grid */}
                         <div className="stats-grid">

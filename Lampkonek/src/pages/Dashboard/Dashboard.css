@@ -197,6 +197,82 @@
     color: #4b5563;
 }
 
+
+/* Announcement Banner */
+.announcement-banner {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.25);
+    animation: slideDown 0.3s ease-out;
+}
+
+.announcement-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.announcement-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem;
+    border-radius: 50%;
+}
+
+.announcement-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.announcement-title {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+}
+
+.announcement-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: white;
+    padding: 0.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    opacity: 0.8;
+}
+
+.announcement-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    opacity: 1;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Stats Grid */
 .stats-grid {
     display: grid;
