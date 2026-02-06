@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.0.0</span>
+                            <span className="version-number">v1.0.1</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,21 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 6, 2026</span>
+                                <h4 className="update-title">Role-Based Access & Profiles 🛡️</h4>
+                                <p>We've implemented secure access controls and personalized profiles.</p>
+                                <ul className="feature-list">
+                                    <li>👮‍♂️ <strong>Role-Based Access:</strong> Specific modules are now restricted based on your role (Admin, Ministry Leader, Logistics, member, etc).</li>
+                                    <li>👤 <strong>Personalized Profile:</strong> "My Profile" now displays your actual account details.</li>
+                                    <li>🧭 <strong>Smart Navigation:</strong> The sidebar only shows links relevant to your role.</li>
+                                    <li>🖼️ <strong>User Widget:</strong> Top bar now shows your real name and role.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 5, 2026</span>
                                 <h4 className="update-title">Global Launch 🚀</h4>

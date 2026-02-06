@@ -1,15 +1,32 @@
 import {
-    User,
     Mail,
     Phone,
     MapPin,
     Calendar,
     Edit2,
-    Settings
+
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import './MyProfile.css';
 
 export const MyProfile = () => {
+    const { profile, user } = useAuth();
+
+    const displayName = profile?.full_name || 'User';
+    const displayRole = profile?.role || 'Member';
+    const email = profile?.email || user?.email || 'No email';
+    const initials = displayName
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+
+    // Mock data for fields not yet in DB
+    const phone = "0917-123-4567";
+    const cluster = "Cluster A";
+    const joinDate = "Jan 2020";
+
     return (
         <div className="my-profile-page">
             <header className="top-bar">
@@ -17,15 +34,7 @@ export const MyProfile = () => {
                     <h1>My Profile</h1>
                 </div>
                 <div className="top-actions">
-                    <div className="user-profile">
-                        <div className="user-info">
-                            <span className="user-name">Ministry Leader</span>
-                            <span className="user-role">ADMIN</span>
-                        </div>
-                        <div className="avatar">
-                            <User size={20} />
-                        </div>
-                        <Settings size={20} style={{ color: '#9ca3af', marginLeft: '0.5rem', cursor: 'pointer' }} />
+                    <div className="user-profile-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
                     </div>
                 </div>
             </header>
@@ -35,30 +44,36 @@ export const MyProfile = () => {
                 <div className="profile-header-card">
                     <div className="profile-main-info">
                         <div className="profile-avatar-large">
-                            <User size={48} />
+                            {profile?.avatar_url ? (
+                                <img src={profile.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            ) : (
+                                <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                    {initials}
+                                </div>
+                            )}
                             <div className="avatar-edit-btn">
                                 <Edit2 size={14} />
                             </div>
                         </div>
                         <div>
                             <div className="p-name-row">
-                                <h2 className="p-name">Admin User</h2>
+                                <h2 className="p-name">{displayName}</h2>
                                 <span className="p-badge">Active</span>
                                 <span style={{ color: '#9ca3af' }}>•</span>
-                                <span className="p-role">Administrator</span>
+                                <span className="p-role">{displayRole}</span>
                             </div>
                             <div className="p-details-grid">
                                 <div className="p-detail-item">
-                                    <Mail size={14} /> admin@lampbinan.org
+                                    <Mail size={14} /> {email}
                                 </div>
                                 <div className="p-detail-item">
-                                    <Phone size={14} /> 0917-123-4567
+                                    <Phone size={14} /> {phone}
                                 </div>
                                 <div className="p-detail-item">
-                                    <MapPin size={14} /> Cluster A
+                                    <MapPin size={14} /> {cluster}
                                 </div>
                                 <div className="p-detail-item">
-                                    <Calendar size={14} /> Member since Jan 2020
+                                    <Calendar size={14} /> Member since {joinDate}
                                 </div>
                             </div>
                         </div>
@@ -77,23 +92,23 @@ export const MyProfile = () => {
 
                     <div className="form-grid-2">
                         <div className="form-group">
-                            <label className="form-label">First Name</label>
-                            <input type="text" className="form-input" defaultValue="Admin" />
+                            <label className="form-label">Full Name</label>
+                            <input type="text" className="form-input" defaultValue={displayName} />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Last Name</label>
-                            <input type="text" className="form-input" defaultValue="User" />
+                            <label className="form-label">Role</label>
+                            <input type="text" className="form-input" defaultValue={displayRole} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
                         </div>
                     </div>
 
                     <div className="form-grid-2">
                         <div className="form-group">
                             <label className="form-label">Email Address</label>
-                            <input type="email" className="form-input" defaultValue="admin@lampbinan.org" />
+                            <input type="email" className="form-input" defaultValue={email} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Phone Number</label>
-                            <input type="text" className="form-input" defaultValue="0917-123-4567" />
+                            <input type="text" className="form-input" defaultValue={phone} />
                         </div>
                     </div>
 
@@ -108,7 +123,7 @@ export const MyProfile = () => {
                         <div className="form-group">
                             <label className="form-label">Cluster</label>
                             <div style={{ position: 'relative' }}>
-                                <select className="form-input" style={{ appearance: 'none' }}>
+                                <select className="form-input" style={{ appearance: 'none' }} defaultValue={cluster}>
                                     <option>Cluster A</option>
                                     <option>Cluster B</option>
                                 </select>
@@ -131,17 +146,17 @@ export const MyProfile = () => {
 
                     <div className="form-group">
                         <label className="form-label">Current Password</label>
-                        <input type="password" className="form-input" defaultValue="........" />
+                        <input type="password" className="form-input" placeholder="••••••••" />
                     </div>
 
                     <div className="form-grid-2">
                         <div className="form-group">
                             <label className="form-label">New Password</label>
-                            <input type="password" className="form-input" defaultValue="........" />
+                            <input type="password" className="form-input" placeholder="••••••••" />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Confirm New Password</label>
-                            <input type="password" className="form-input" defaultValue="........" />
+                            <input type="password" className="form-input" placeholder="••••••••" />
                         </div>
                     </div>
 
@@ -154,12 +169,6 @@ export const MyProfile = () => {
                     © 2024 Lampkonek Ministry Management System. All rights reserved.
                 </div>
             </div>
-
-            {/* Theme Toggle Floating Button (as seen in screenshot bottom right if that's what it is, or maybe just standard) 
-                Actually the screenshot shows a Moon icon in a circle at the bottom right of the 'Change Password' card area?
-                Wait, looking at the image... ah, there is a round pill-shaped toggle at the bottom right of the password card.
-                Let's stick to standard layout first.
-            */}
         </div>
     );
 };

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
     Moon,
-    User,
     Plus,
     ChevronLeft,
     ChevronRight,
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react';
 import './Reservation.css';
 import { NewReservationModal } from './NewReservationModal';
+import { UserProfile } from '../../components/UserProfile';
 
 // Mock Data
 const upcomingReservations = [
@@ -90,15 +90,7 @@ export const Reservation = () => {
                         <Moon size={20} />
                     </button>
 
-                    <div className="user-profile">
-                        <div className="user-info">
-                            <span className="user-name">Ministry Leader</span>
-                            <span className="user-role">ADMIN</span>
-                        </div>
-                        <div className="avatar">
-                            <User size={20} />
-                        </div>
-                    </div>
+                    <UserProfile />
                 </div>
             </header>
 

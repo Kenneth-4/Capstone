@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LayoutDashboard, Users, User, Calendar, BarChart, Settings, LogOut, UserCircle, Moon, CheckSquare, Clock, Activity, UserPlus, TrendingUp, Bell, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +11,8 @@ import { Reports } from './Reports';
 import { MemberReport } from './MemberReport';
 import { Settings as SettingsPage } from './Settings';
 import { MyProfile } from './MyProfile';
+import { UserProfile } from '../../components/UserProfile';
+import { useAuth } from '../../context/AuthContext';
 
 const AttendanceData = [
     { name: 'Jan', present: 10, absent: 40, visitor: 5 },
@@ -28,12 +30,47 @@ const MemberStatusData = [
     { name: 'Visitor', value: 12, color: '#f59e0b' },
 ];
 
+// Map of roles to allowed tabs
+// Keys must match the values stored in the database profiles table
+const ROLE_ACCESS: Record<string, string[]> = {
+    administrator: ['Dashboard', 'Attendance', 'Members', 'Reservation', 'Reports', 'Settings', 'My Profile'],
+    ministry_leader: ['Attendance', 'Members', 'Reports', 'My Profile'],
+    logistics: ['Reservation'], // "Reservation module only" per request
+    member: ['My Profile', 'Attendance'],
+    volunteer: ['My Profile', 'Attendance']
+};
+
 export const Dashboard = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('Dashboard');
+    const { profile, loading } = useAuth();
+    const [activeTab, setActiveTab] = useState('');
     const [reportType, setReportType] = useState('Attendance'); // 'Attendance' | 'Members'
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showAnnouncement, setShowAnnouncement] = useState(true);
+
+    // Filter allowed tabs based on role
+    const getRoleTabs = () => {
+        if (!profile) return [];
+        const role = profile.role || 'member';
+        return ROLE_ACCESS[role] || [];
+    };
+
+    const allowedTabs = getRoleTabs();
+
+    useEffect(() => {
+        if (!loading && profile) {
+            // If currently active tab is not allowed (or empty), redirect to first allowed tab
+            if (!activeTab || !allowedTabs.includes(activeTab)) {
+                if (allowedTabs.length > 0) {
+                    setActiveTab(allowedTabs[0]);
+                } else {
+                    // Fallback if no tabs allowed? Should shouldn't happen with valid roles.
+                    // Maybe just show 'My Profile' or nothing.
+                    setActiveTab('My Profile');
+                }
+            }
+        }
+    }, [loading, profile, allowedTabs, activeTab]);
 
     const handleLogout = () => {
         setIsLoggingOut(true);
@@ -43,6 +80,24 @@ export const Dashboard = () => {
             navigate('/login');
         }, 1500);
     };
+
+    if (loading) {
+        return (
+            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="progress"></div>
+            </div>
+        );
+    }
+
+    const navItems = [
+        { id: 'Dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { id: 'Attendance', icon: Users, label: 'Attendance' },
+        { id: 'Members', icon: User, label: 'Members' },
+        { id: 'Reservation', icon: Calendar, label: 'Reservation' },
+        { id: 'Reports', icon: BarChart, label: 'Reports' },
+        { id: 'Settings', icon: Settings, label: 'Settings' },
+        { id: 'My Profile', icon: UserCircle, label: 'My Profile' },
+    ];
 
     return (
         <div className="dashboard-container">
@@ -62,34 +117,22 @@ export const Dashboard = () => {
                 </div>
 
                 <nav className="sidebar-nav">
-                    <a href="#" className={`nav-item ${activeTab === 'Dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('Dashboard')}>
-                        <LayoutDashboard size={20} />
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="#" className={`nav-item ${activeTab === 'Attendance' ? 'active' : ''}`} onClick={() => setActiveTab('Attendance')}>
-                        <Users size={20} />
-                        <span>Attendance</span>
-                    </a>
-                    <a href="#" className={`nav-item ${activeTab === 'Members' ? 'active' : ''}`} onClick={() => setActiveTab('Members')}>
-                        <User size={20} />
-                        <span>Members</span>
-                    </a>
-                    <a href="#" className={`nav-item ${activeTab === 'Reservation' ? 'active' : ''}`} onClick={() => setActiveTab('Reservation')}>
-                        <Calendar size={20} />
-                        <span>Reservation</span>
-                    </a>
-                    <a href="#" className={`nav-item ${activeTab === 'Reports' ? 'active' : ''}`} onClick={() => setActiveTab('Reports')}>
-                        <BarChart size={20} />
-                        <span>Reports</span>
-                    </a>
-                    <a href="#" className={`nav-item ${activeTab === 'Settings' ? 'active' : ''}`} onClick={() => setActiveTab('Settings')}>
-                        <Settings size={20} />
-                        <span>Settings</span>
-                    </a>
-                    <a href="#" className={`nav-item ${activeTab === 'My Profile' ? 'active' : ''}`} onClick={() => setActiveTab('My Profile')}>
-                        <UserCircle size={20} />
-                        <span>My Profile</span>
-                    </a>
+                    {navItems.map((item) => {
+                        if (allowedTabs.includes(item.id)) {
+                            return (
+                                <a
+                                    key={item.id}
+                                    href="#"
+                                    className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+                                    onClick={(e) => { e.preventDefault(); setActiveTab(item.id); }}
+                                >
+                                    <item.icon size={20} />
+                                    <span>{item.label}</span>
+                                </a>
+                            );
+                        }
+                        return null;
+                    })}
                 </nav>
 
                 <div className="logout-section">
@@ -163,15 +206,7 @@ export const Dashboard = () => {
                                     <Moon size={20} />
                                 </button>
 
-                                <div className="user-profile">
-                                    <div className="user-info">
-                                        <span className="user-name">Ministry Leader</span>
-                                        <span className="user-role">ADMIN</span>
-                                    </div>
-                                    <div className="avatar">
-                                        <User size={20} />
-                                    </div>
-                                </div>
+                                <UserProfile />
                             </div>
                         </header>
 

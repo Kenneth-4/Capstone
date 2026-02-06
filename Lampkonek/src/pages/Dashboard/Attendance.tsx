@@ -8,8 +8,6 @@ import {
     ChevronRight,
     Edit2,
     Moon,
-    User,
-    Bell,
     CheckSquare
 } from 'lucide-react';
 import { useState } from 'react';
@@ -17,6 +15,7 @@ import { TakeAttendanceModal } from './TakeAttendanceModal';
 import { AttendanceChecklistModal } from './AttendanceChecklistModal';
 import { AddAttendanceModal } from './AddAttendanceModal';
 import './Attendance.css';
+import { UserProfile } from '../../components/UserProfile';
 
 const attendanceData = [
     { id: 1, name: 'John Doe', initials: 'JD', status: 'Present', cluster: 'Cluster A', event: 'Sunday Service', avatarColor: 'avatar-purple' },
@@ -45,19 +44,7 @@ export const Attendance = () => {
                         <Moon size={20} />
                     </button>
 
-                    <button className="theme-toggle">
-                        <Bell size={20} />
-                    </button>
-
-                    <div className="user-profile">
-                        <div className="user-info">
-                            <span className="user-name">Ministry Leader</span>
-                            <span className="user-role">ADMIN</span>
-                        </div>
-                        <div className="avatar">
-                            <User size={20} />
-                        </div>
-                    </div>
+                    <UserProfile />
                 </div>
             </header>
 

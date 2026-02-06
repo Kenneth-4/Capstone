@@ -7,11 +7,10 @@ import {
     ChevronLeft,
     ChevronRight,
     Moon,
-    User,
-    Settings
 } from 'lucide-react';
 import './Members.css';
 import { AddMemberModal } from './AddMemberModal';
+import { UserProfile } from '../../components/UserProfile';
 
 // Mock Data
 const membersData = [
@@ -56,15 +55,8 @@ export const Members = () => {
                         <Moon size={20} />
                     </button>
 
-                    <div className="user-profile">
-                        <div className="user-info">
-                            <span className="user-name">Ministry Leader</span>
-                            <span className="user-role">ADMIN</span>
-                        </div>
-                        <div className="avatar">
-                            <User size={20} />
-                        </div>
-                        <Settings size={20} style={{ color: '#9ca3af', cursor: 'pointer', marginLeft: '0.5rem' }} />
+                    <div className="user-profile-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
+                        <UserProfile />
                     </div>
                 </div>
             </header>
