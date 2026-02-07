@@ -63,6 +63,8 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                                     <li>📝 <strong>Edit Profiles:</strong> Admins can now edit member details directly from the list.</li>
                                     <li>🔌 <strong>Real Data:</strong> The members list now pulls live data from the database.</li>
                                     <li>🔍 <strong>Search & Filter:</strong> Finding members is now easier with working search and filter tools.</li>
+                                    <li>🗑️ <strong>Delete Members:</strong> Admins can now delete member profiles.</li>
+                                    <li>🗑️ <strong>Removed Add Members:</strong> Removed the ability to add new members. as it will be a security risk. instead, members can now use the sign up form to create their own accounts.</li>
                                 </ul>
                             </div>
                         </div>

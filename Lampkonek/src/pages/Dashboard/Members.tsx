@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
     Search,
     Filter,
-    Plus,
     ChevronsUpDown,
     ChevronLeft,
     ChevronRight,
@@ -87,12 +86,6 @@ export const Members = () => {
         const matchesStatus = statusFilter === 'All Status' || member.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
-
-
-    const handleAddMember = () => {
-        setEditingMember(null);
-        setIsAddMemberOpen(true);
-    };
 
     const handleEditMember = (member: Member) => {
         setEditingMember(member);
