@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.0.1</span>
+                            <span className="version-number">v1.0.2</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,20 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 8, 2026</span>
+                                <h4 className="update-title">Member Editing & Data Integration ✏️</h4>
+                                <p>We've enhanced the Members module with real data capabilities.</p>
+                                <ul className="feature-list">
+                                    <li>📝 <strong>Edit Profiles:</strong> Admins can now edit member details directly from the list.</li>
+                                    <li>🔌 <strong>Real Data:</strong> The members list now pulls live data from the database.</li>
+                                    <li>🔍 <strong>Search & Filter:</strong> Finding members is now easier with working search and filter tools.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 6, 2026</span>
                                 <h4 className="update-title">Role-Based Access & Profiles 🛡️</h4>

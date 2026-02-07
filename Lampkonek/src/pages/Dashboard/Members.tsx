@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Search,
     Filter,
@@ -11,20 +11,18 @@ import {
 import './Members.css';
 import { AddMemberModal } from './AddMemberModal';
 import { UserProfile } from '../../components/UserProfile';
+import { supabase } from '../../lib/supabase';
+import toast from 'react-hot-toast';
 
-// Mock Data
-const membersData = [
-    { id: '01', name: 'Jane Doe', email: 'JaneDoe@gmail.com', cluster: 'Cluster B', status: 'Active', ministry: 'Ushering' },
-    { id: '01', name: 'John Smith', email: 'JohnSmith@gmail.com', cluster: 'Cluster C', status: 'Semi Active', ministry: 'Music Ministry' },
-    { id: '01', name: 'Alice Wong', email: 'AliceWong@gmail.com', cluster: 'Cluster D', status: 'Transferred', ministry: 'MMPM' },
-    { id: '01', name: 'Bob Roberts', email: 'BobRoberts@gmail.com', cluster: 'Cluster A', status: 'Inactive', ministry: 'Worship' },
-    { id: '01', name: 'Jane Doe', email: 'JaneDoe@gmail.com', cluster: 'Cluster B', status: 'Active', ministry: 'Ushering' },
-    { id: '01', name: 'Maria Garcia', email: 'MariaG@gmail.com', cluster: 'Cluster B', status: 'Deceased', ministry: 'Ushering' },
-    { id: '01', name: 'David Lee', email: 'DavidLee@gmail.com', cluster: 'Cluster B', status: 'Visitor', ministry: 'Ushering' },
-    { id: '01', name: 'Jane Doe', email: 'JaneDoe@gmail.com', cluster: 'Cluster B', status: 'Active', ministry: 'Ushering' },
-    { id: '01', name: 'Jane Doe', email: 'JaneDoe@gmail.com', cluster: 'Cluster B', status: 'Active', ministry: 'Ushering' },
-    { id: '01', name: 'Jane Doe', email: 'JaneDoe@gmail.com', cluster: 'Cluster B', status: 'Active', ministry: 'Ushering' },
-];
+interface Member {
+    id: string;
+    full_name: string;
+    email: string;
+    cluster: string;
+    ministry: string;
+    status: string;
+    role: string;
+}
 
 const getStatusClass = (status: string) => {
     switch (status) {
@@ -34,12 +32,99 @@ const getStatusClass = (status: string) => {
         case 'Transferred': return 'status-transferred';
         case 'Deceased': return 'status-deceased';
         case 'Visitor': return 'status-visitor';
-        default: return '';
+        default: return 'status-active'; // Default style
     }
 };
 
 export const Members = () => {
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+    const [members, setMembers] = useState<Member[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All Status');
+    const [editingMember, setEditingMember] = useState<Member | null>(null);
+
+    // Fetch members from Supabase
+    const fetchMembers = async () => {
+        try {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .order('full_name', { ascending: true });
+
+            if (error) throw error;
+
+            if (data) {
+                // Map the data to ensure all fields exist (handling nulls from DB)
+                const mappedMembers = data.map((profile: any) => ({
+                    id: profile.id,
+                    full_name: profile.full_name || 'Unknown',
+                    email: profile.email || 'No Email',
+                    cluster: profile.cluster || 'Unassigned',
+                    ministry: profile.ministry || 'None',
+                    status: profile.status || 'Active',
+                    role: profile.role
+                }));
+                setMembers(mappedMembers);
+            }
+        } catch (error: any) {
+            console.error('Error fetching members:', error);
+            toast.error('Failed to load members');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchMembers();
+    }, []);
+
+    // Filter logic
+    const filteredMembers = members.filter(member => {
+        const matchesSearch = member.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            member.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === 'All Status' || member.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
+
+    const handleAddMember = () => {
+        setEditingMember(null);
+        setIsAddMemberOpen(true);
+    };
+
+    const handleEditMember = (member: Member) => {
+        setEditingMember(member);
+        setIsAddMemberOpen(true);
+    };
+
+    const handleDeleteMember = async (member: Member) => {
+        // Confirmation dialog
+        const confirmDelete = window.confirm(
+            `Are you sure you want to delete ${member.full_name}?\n\nThis action cannot be undone and will permanently remove:\n- User account\n- Profile data\n- All associated records`
+        );
+
+        if (!confirmDelete) return;
+
+        try {
+            // Delete the profile (this will cascade delete the auth user due to foreign key)
+            const { error } = await supabase
+                .from('profiles')
+                .delete()
+                .eq('id', member.id);
+
+            if (error) throw error;
+
+            toast.success(`${member.full_name} has been deleted successfully`);
+
+            // Refresh the members list
+            fetchMembers();
+        } catch (error: any) {
+            console.error('Error deleting member:', error);
+            toast.error(error.message || 'Failed to delete member');
+        }
+    };
 
     return (
         <div className="members-content">
@@ -67,94 +152,143 @@ export const Members = () => {
                     <div className="search-filter-group">
                         <div className="search-box">
                             <Search size={18} className="search-icon" />
-                            <input type="text" placeholder="Search members..." className="search-input" />
+                            <input
+                                type="text"
+                                placeholder="Search members..."
+                                className="search-input"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
                         <div className="dropdown-filter">
-                            <select className="filter-select">
+                            <select
+                                className="filter-select"
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                            >
                                 <option>All Status</option>
                                 <option>Active</option>
                                 <option>Inactive</option>
+                                <option>Semi Active</option>
+                                <option>Transferred</option>
+                                <option>Visitor</option>
                             </select>
                         </div>
                         <button className="filter-btn">
                             <Filter size={18} />
                         </button>
                     </div>
-
-                    <button className="add-member-btn" onClick={() => setIsAddMemberOpen(true)}>
+                    {/*
+                    <button className="add-member-btn" onClick={handleAddMember}>
                         <Plus size={18} />
                         ADD NEW MEMBER
                     </button>
+                    */}
                 </div>
 
                 {/* Table */}
                 <div className="table-container">
-                    <table className="members-table">
-                        <thead>
-                            <tr>
-                                <th>ID <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                <th>NAME <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                <th>EMAIL <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                <th>CLUSTER <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                <th>STATUS <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                <th>MINISTRY <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                <th>ACTION</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {membersData.map((member, index) => (
-                                <tr key={index}>
-                                    <td>{member.id}</td>
-                                    <td className="member-name">{member.name}</td>
-                                    <td>{member.email}</td>
-                                    <td>{member.cluster}</td>
-                                    <td>
-                                        <span className={`status-badge ${getStatusClass(member.status)}`}>
-                                            {member.status}
-                                        </span>
-                                    </td>
-                                    <td>{member.ministry}</td>
-                                    <td>
-                                        <a href="#" className="action-link">Edit</a>
-                                    </td>
+                    {loading ? (
+                        <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Loading members...</div>
+                    ) : (
+                        <table className="members-table">
+                            <thead>
+                                <tr>
+                                    <th>NAME <ChevronsUpDown size={14} className="sort-icon" /></th>
+                                    <th>EMAIL <ChevronsUpDown size={14} className="sort-icon" /></th>
+                                    <th>CLUSTER <ChevronsUpDown size={14} className="sort-icon" /></th>
+                                    <th>STATUS <ChevronsUpDown size={14} className="sort-icon" /></th>
+                                    <th>MINISTRY <ChevronsUpDown size={14} className="sort-icon" /></th>
+                                    <th>ROLE <ChevronsUpDown size={14} className="sort-icon" /></th>
+                                    <th>ACTION</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {filteredMembers.length > 0 ? (
+                                    filteredMembers.map((member) => (
+                                        <tr key={member.id}>
+                                            <td className="member-name">{member.full_name}</td>
+                                            <td>{member.email}</td>
+                                            <td>{member.cluster}</td>
+                                            <td>
+                                                <span className={`status-badge ${getStatusClass(member.status)}`}>
+                                                    {member.status}
+                                                </span>
+                                            </td>
+                                            <td>{member.ministry}</td>
+                                            <td style={{ textTransform: 'capitalize' }}>{member.role?.replace('_', ' ')}</td>
+                                            <td>
+                                                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                                    <button
+                                                        className="action-link"
+                                                        style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#6366f1', padding: 0, fontWeight: 500 }}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            handleEditMember(member);
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <span style={{ color: '#e5e7eb' }}>|</span>
+                                                    <button
+                                                        className="action-link"
+                                                        style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444', padding: 0, fontWeight: 500 }}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            handleDeleteMember(member);
+                                                        }}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>No members found.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    )}
 
-                    {/* Pagination */}
-                    <div className="pagination-container">
-                        <div className="per-page-select">
-                            <span>Per Page</span>
-                            <select className="page-select-input">
-                                <option>20</option>
-                                <option>50</option>
-                                <option>100</option>
-                            </select>
-                        </div>
+                    {/* Pagination - Visual Only for now */}
+                    {!loading && filteredMembers.length > 0 && (
+                        <div className="pagination-container">
+                            <div className="per-page-select">
+                                <span>Per Page</span>
+                                <select className="page-select-input">
+                                    <option>20</option>
+                                    <option>50</option>
+                                    <option>100</option>
+                                </select>
+                            </div>
 
-                        <div className="pagination-controls">
-                            <button className="page-btn" disabled>
-                                <ChevronLeft size={16} />
-                            </button>
-                            <button className="page-btn active">01</button>
-                            <button className="page-btn">2</button>
-                            <button className="page-btn">3</button>
-                            <span style={{ color: '#9ca3af', margin: '0 0.25rem' }}>...</span>
-                            <button className="page-btn">99</button>
-                            <button className="page-btn">
-                                <ChevronRight size={16} />
-                            </button>
-                        </div>
+                            <div className="pagination-controls">
+                                <button className="page-btn" disabled>
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <button className="page-btn active">1</button>
+                                <button className="page-btn">
+                                    <ChevronRight size={16} />
+                                </button>
+                            </div>
 
-                        <div className="pagination-info">
-                            Showing 1 to 10 of 275 members
+                            <div className="pagination-info">
+                                Showing {filteredMembers.length} entries
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
-            <AddMemberModal isOpen={isAddMemberOpen} onClose={() => setIsAddMemberOpen(false)} />
+            <AddMemberModal
+                isOpen={isAddMemberOpen}
+                onClose={() => setIsAddMemberOpen(false)}
+                member={editingMember}
+                onSuccess={fetchMembers}
+            />
         </div>
     );
 };
