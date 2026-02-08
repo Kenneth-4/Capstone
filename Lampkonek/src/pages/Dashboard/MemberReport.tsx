@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
     Download,
     ChevronDown,
@@ -15,53 +16,186 @@ import {
     XAxis,
     Tooltip
 } from 'recharts';
+import { supabase } from '../../lib/supabase';
+import toast from 'react-hot-toast';
 import './MemberReport.css';
 
-// Mock Data
-const pieData = [
-    { name: 'Active', value: 12, color: '#10b981', percent: '28.6%' },
-    { name: 'Inactive', value: 22, color: '#ef4444', percent: '42.9%' },
-    { name: 'Transferred', value: 12, color: '#d1d5db', percent: '28.6%' },
-    { name: 'Visitor', value: 12, color: '#f59e0b', percent: '28.6%' },
-    { name: 'Deceased', value: 7, color: '#6b7280', percent: '14.3%' },
-];
+// Interfaces
+interface PieData {
+    name: string;
+    value: number;
+    color: string;
+    percent: string;
+}
 
-const lineData = [
-    { name: 'JAN', active: 10, inactive: 20, visitor: 15 },
-    { name: 'FEB', active: 30, inactive: 15, visitor: 10 },
-    { name: 'MAR', active: 15, inactive: 40, visitor: 35 },
-    { name: 'APR', active: 20, inactive: 50, visitor: 10 },
-    { name: 'MAY', active: 55, inactive: 10, visitor: 15 },
-    { name: 'JUN', active: 15, inactive: 50, visitor: 50 },
-];
+interface LineData {
+    name: string;
+    active: number;
+    inactive: number;
+    visitor: number;
+}
 
-const memberList = [
-    { name: 'Maria Santos', status: 'Active', ministry: 'Worship Team', cluster: 'Cluster A', joinDate: '2023-01-15' },
-    { name: 'Juan Dela Cruz', status: 'Active', ministry: 'Youth Ministry', cluster: 'Cluster B', joinDate: '2022-06-20' },
-];
+interface MemberListItem {
+    name: string;
+    status: string;
+    ministry: string;
+    cluster: string;
+    joinDate: string;
+}
+
+interface MemberStats {
+    totalMembers: number;
+    activeMembers: number;
+    visitors: number;
+    newThisMonth: number;
+    totalMinistries: number;
+    growthPercent: number;
+}
 
 export const MemberReport = () => {
+    const [stats, setStats] = useState<MemberStats>({
+        totalMembers: 0,
+        activeMembers: 0,
+        visitors: 0,
+        newThisMonth: 0,
+        totalMinistries: 0,
+        growthPercent: 0
+    });
+    const [pieData, setPieData] = useState<PieData[]>([]);
+    const [lineData, setLineData] = useState<LineData[]>([]);
+    const [memberList, setMemberList] = useState<MemberListItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [clusterFilter, setClusterFilter] = useState('All Clusters');
+    const [availableClusters, setAvailableClusters] = useState<string[]>([]);
+
+    // Fetch all member report data
+    useEffect(() => {
+        fetchMemberReportData();
+    }, []);
+
+    const fetchMemberReportData = async () => {
+        try {
+            setIsLoading(true);
+
+            // Fetch all profiles
+            const { data: profiles, error: profilesError } = await supabase
+                .from('profiles')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (profilesError) throw profilesError;
+
+            // Calculate stats
+            const totalMembers = profiles?.length || 0;
+            const activeMembers = profiles?.filter(p => p.status === 'Active').length || 0;
+            const visitors = profiles?.filter(p => p.status === 'Visitor').length || 0;
+
+            // New members this month
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+            const newThisMonth = profiles?.filter(p =>
+                new Date(p.created_at) >= startOfMonth
+            ).length || 0;
+
+            // Count unique ministries (placeholder - would need ministries table)
+            const totalMinistries = 7; // Placeholder
+
+            setStats({
+                totalMembers,
+                activeMembers,
+                visitors,
+                newThisMonth,
+                totalMinistries,
+                growthPercent: 1.8 // Placeholder
+            });
+
+            // Calculate pie chart data (status distribution)
+            const statusCounts: Record<string, number> = {};
+            profiles?.forEach(p => {
+                const status = p.status || 'Inactive';
+                statusCounts[status] = (statusCounts[status] || 0) + 1;
+            });
+
+            const colors: Record<string, string> = {
+                'Active': '#10b981',
+                'Inactive': '#ef4444',
+                'Transferred': '#d1d5db',
+                'Visitor': '#f59e0b',
+                'Deceased': '#6b7280'
+            };
+
+            const pieArray: PieData[] = Object.entries(statusCounts).map(([name, value]) => ({
+                name,
+                value,
+                color: colors[name] || '#9ca3af',
+                percent: totalMembers > 0 ? `${Math.round((value / totalMembers) * 100)}%` : '0%'
+            }));
+            setPieData(pieArray);
+
+            // Calculate line chart data (last 6 months)
+            const monthsData: LineData[] = [];
+            const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+            for (let i = 5; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const monthName = monthNames[date.getMonth()];
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+
+                // Get first and last day of month
+                const firstDay = new Date(year, month - 1, 1).toISOString();
+                const lastDay = new Date(year, month, 0).toISOString();
+
+                // Count members by status created in this month
+                const monthProfiles = profiles?.filter(p => {
+                    const createdDate = new Date(p.created_at);
+                    return createdDate >= new Date(firstDay) && createdDate <= new Date(lastDay);
+                });
+
+                const active = monthProfiles?.filter(p => p.status === 'Active').length || 0;
+                const inactive = monthProfiles?.filter(p => p.status === 'Inactive').length || 0;
+                const visitor = monthProfiles?.filter(p => p.status === 'Visitor').length || 0;
+
+                monthsData.push({ name: monthName, active, inactive, visitor });
+            }
+            setLineData(monthsData);
+
+            // Prepare member list (top 10 most recent)
+            const memberListData: MemberListItem[] = profiles?.slice(0, 10).map(p => ({
+                name: p.full_name || 'Unknown',
+                status: p.status || 'Inactive',
+                ministry: 'General', // Placeholder - would need ministries table
+                cluster: p.cluster || 'Unassigned',
+                joinDate: p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : 'N/A'
+            })) || [];
+            setMemberList(memberListData);
+
+            // Extract unique clusters for filter
+            const clusters = Array.from(new Set(profiles?.map(p => p.cluster || 'Unassigned').filter(Boolean)));
+            setAvailableClusters(clusters.sort());
+
+        } catch (error) {
+            console.error('Error fetching member report data:', error);
+            toast.error('Failed to load member report data');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Filter member list
+    const filteredMembers = memberList.filter(m => {
+        const clusterMatch = clusterFilter === 'All Clusters' || m.cluster === clusterFilter;
+        return clusterMatch;
+    });
+
     return (
         <div className="member-report-content">
             {/* Header */}
             <header className="top-bar">
                 <div className="page-title">
                     <h1>Members Report</h1>
-                    <p>Detailed analytics and member distribution</p>
-                </div>
-
-                <div className="top-actions">
-                    {/* The image shows profile here, consistent with others */}
-                    <div className="user-profile">
-                        <div className="user-info">
-                            <span className="user-name">Ministry Leader</span>
-                            <span className="user-role">ADMIN</span>
-                        </div>
-                        <div className="avatar" style={{ backgroundColor: '#ffedd5', color: '#9a3412' }}>
-                            <span style={{ fontSize: '12px' }}>ML</span>
-                        </div>
-                        <Settings size={20} style={{ color: '#9ca3af', marginLeft: '0.5rem', cursor: 'pointer' }} />
-                    </div>
                 </div>
             </header>
 
@@ -69,15 +203,46 @@ export const MemberReport = () => {
                 {/* Controls */}
                 <div className="mr-controls-row">
                     <div className="mr-filters">
-                        <select className="mr-select">
-                            <option>All Status</option>
-                        </select>
-                        <select className="mr-select">
-                            <option>All Ministries</option>
-                        </select>
-                        <select className="mr-select">
-                            <option>All Clusters</option>
-                        </select>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: 500 }}>Filter by Cluster:</span>
+                            <select
+                                className="mr-select"
+                                value={clusterFilter}
+                                onChange={(e) => setClusterFilter(e.target.value)}
+                                style={{
+                                    minWidth: '150px',
+                                    padding: '0.5rem 2rem 0.5rem 0.75rem',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    fontSize: '0.875rem',
+                                    color: '#374151',
+                                    backgroundColor: 'white',
+                                    cursor: 'pointer',
+                                    outline: 'none'
+                                }}
+                            >
+                                <option>All Clusters</option>
+                                {availableClusters.map(cluster => (
+                                    <option key={cluster} value={cluster}>{cluster}</option>
+                                ))}
+                            </select>
+                            {clusterFilter !== 'All Clusters' && (
+                                <button
+                                    onClick={() => setClusterFilter('All Clusters')}
+                                    style={{
+                                        padding: '0.25rem 0.5rem',
+                                        fontSize: '0.75rem',
+                                        color: '#6b7280',
+                                        backgroundColor: '#f3f4f6',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Clear
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <button className="export-report-btn">
@@ -91,34 +256,34 @@ export const MemberReport = () => {
                     <div className="mr-stat-card">
                         <div>
                             <span className="mr-stat-title">TOTAL MEMBERS</span>
-                            <div className="mr-stat-value">275</div>
+                            <div className="mr-stat-value">{isLoading ? '...' : stats.totalMembers}</div>
                         </div>
                         <div className="mr-stat-meta meta-green">
-                            <TrendingUp size={14} /> 1.8% growth
+                            <TrendingUp size={14} /> {stats.growthPercent}% growth
                         </div>
                     </div>
                     <div className="mr-stat-card">
                         <div>
                             <span className="mr-stat-title">ACTIVE</span>
-                            <div className="mr-stat-value">185</div>
+                            <div className="mr-stat-value">{isLoading ? '...' : stats.activeMembers}</div>
                         </div>
                         <div className="mr-stat-meta meta-gray">
-                            67% of total
+                            {stats.totalMembers > 0 ? Math.round((stats.activeMembers / stats.totalMembers) * 100) : 0}% of total
                         </div>
                     </div>
                     <div className="mr-stat-card">
                         <div>
                             <span className="mr-stat-title">VISITORS</span>
-                            <div className="mr-stat-value">42</div>
+                            <div className="mr-stat-value">{isLoading ? '...' : stats.visitors}</div>
                         </div>
                         <div className="mr-stat-meta" style={{ color: '#3b82f6' }}>
-                            15% of total
+                            {stats.totalMembers > 0 ? Math.round((stats.visitors / stats.totalMembers) * 100) : 0}% of total
                         </div>
                     </div>
                     <div className="mr-stat-card">
                         <div>
                             <span className="mr-stat-title">NEW THIS MONTH</span>
-                            <div className="mr-stat-value">12</div>
+                            <div className="mr-stat-value">{isLoading ? '...' : stats.newThisMonth}</div>
                         </div>
                         <div className="mr-stat-meta meta-green">
                             <TrendingUp size={14} /> 15% growth
@@ -127,7 +292,7 @@ export const MemberReport = () => {
                     <div className="mr-stat-card">
                         <div>
                             <span className="mr-stat-title">TOTAL MINISTRIES</span>
-                            <div className="mr-stat-value">7</div>
+                            <div className="mr-stat-value">{isLoading ? '...' : stats.totalMinistries}</div>
                         </div>
                         <div className="mr-stat-meta meta-green">
                             <CheckCircle2 size={14} /> Active
@@ -225,17 +390,31 @@ export const MemberReport = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {memberList.map((m, i) => (
-                                <tr key={i}>
-                                    <td style={{ fontWeight: 600 }}>{m.name}</td>
-                                    <td>
-                                        <span className="status-pill st-active">{m.status}</span>
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
+                                        Loading...
                                     </td>
-                                    <td>{m.ministry}</td>
-                                    <td>{m.cluster}</td>
-                                    <td>{m.joinDate}</td>
                                 </tr>
-                            ))}
+                            ) : filteredMembers.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
+                                        No members found
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredMembers.map((m, i) => (
+                                    <tr key={i}>
+                                        <td style={{ fontWeight: 600 }}>{m.name}</td>
+                                        <td>
+                                            <span className={`status-pill st-${m.status.toLowerCase()}`}>{m.status}</span>
+                                        </td>
+                                        <td>{m.ministry}</td>
+                                        <td>{m.cluster}</td>
+                                        <td>{m.joinDate}</td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

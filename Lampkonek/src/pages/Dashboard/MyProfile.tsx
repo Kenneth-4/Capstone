@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
     Mail,
     Phone,
@@ -7,10 +8,42 @@ import {
 
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
+import toast from 'react-hot-toast';
 import './MyProfile.css';
 
 export const MyProfile = () => {
-    const { profile, user } = useAuth();
+    const { profile, user, refreshProfile } = useAuth();
+
+    // Form state
+    const [formData, setFormData] = useState({
+        full_name: '',
+        phone: '',
+        birth_date: '',
+        cluster: ''
+    });
+
+    // Password state
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+    // Initialize form data when profile loads
+    useEffect(() => {
+        if (profile) {
+            setFormData({
+                full_name: profile.full_name || '',
+                phone: profile.phone || '',
+                birth_date: profile.birth_date || '',
+                cluster: profile.cluster || 'Cluster A'
+            });
+        }
+    }, [profile]);
 
     const displayName = profile?.full_name || 'User';
     const displayRole = profile?.role || 'Member';
@@ -22,10 +55,110 @@ export const MyProfile = () => {
         .toUpperCase()
         .slice(0, 2);
 
-    // Mock data for fields not yet in DB
-    const phone = "0917-123-4567";
-    const cluster = "Cluster A";
-    const joinDate = "Jan 2020";
+    // Handle form input changes
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // Handle password input changes
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setPasswordData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // Save profile changes
+    const handleSaveProfile = async () => {
+        if (!user) return;
+
+        // Validation
+        if (!formData.full_name.trim()) {
+            toast.error('Full name is required');
+            return;
+        }
+
+        setIsUpdating(true);
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    full_name: formData.full_name.trim(),
+                    phone: formData.phone || null,
+                    birth_date: formData.birth_date || null,
+                    cluster: formData.cluster || null
+                })
+                .eq('id', user.id);
+
+            if (error) throw error;
+
+            toast.success('Profile updated successfully!');
+            await refreshProfile();
+        } catch (error: any) {
+            console.error('Error updating profile:', error);
+            toast.error(error.message || 'Failed to update profile');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    // Change password
+    const handleChangePassword = async () => {
+        // Validation
+        if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+            toast.error('Please fill in all password fields');
+            return;
+        }
+
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            toast.error('New passwords do not match');
+            return;
+        }
+
+        if (passwordData.newPassword.length < 6) {
+            toast.error('New password must be at least 6 characters');
+            return;
+        }
+
+        setIsChangingPassword(true);
+        try {
+            // Verify current password by attempting to sign in
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: passwordData.currentPassword
+            });
+
+            if (signInError) {
+                throw new Error('Current password is incorrect');
+            }
+
+            // Update password
+            const { error: updateError } = await supabase.auth.updateUser({
+                password: passwordData.newPassword
+            });
+
+            if (updateError) throw updateError;
+
+            toast.success('Password changed successfully!');
+
+            // Clear password fields
+            setPasswordData({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            });
+        } catch (error: any) {
+            console.error('Error changing password:', error);
+            toast.error(error.message || 'Failed to change password');
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
 
     return (
         <div className="my-profile-page">
@@ -67,20 +200,17 @@ export const MyProfile = () => {
                                     <Mail size={14} /> {email}
                                 </div>
                                 <div className="p-detail-item">
-                                    <Phone size={14} /> {phone}
+                                    <Phone size={14} /> {formData.phone || 'No phone'}
                                 </div>
                                 <div className="p-detail-item">
-                                    <MapPin size={14} /> {cluster}
+                                    <MapPin size={14} /> {formData.cluster || 'No cluster'}
                                 </div>
                                 <div className="p-detail-item">
-                                    <Calendar size={14} /> Member since {joinDate}
+                                    <Calendar size={14} /> Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A'}
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <button className="btn-outline">
-                        <Edit2 size={16} /> Edit Profile
-                    </button>
                 </div>
 
                 {/* Personal Information */}
@@ -93,22 +223,35 @@ export const MyProfile = () => {
                     <div className="form-grid-2">
                         <div className="form-group">
                             <label className="form-label">Full Name</label>
-                            <input type="text" className="form-input" defaultValue={displayName} />
+                            <input
+                                type="text"
+                                className="form-input"
+                                name="full_name"
+                                value={formData.full_name}
+                                onChange={handleInputChange}
+                            />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Role</label>
-                            <input type="text" className="form-input" defaultValue={displayRole} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+                            <input type="text" className="form-input" value={displayRole} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
                         </div>
                     </div>
 
                     <div className="form-grid-2">
                         <div className="form-group">
                             <label className="form-label">Email Address</label>
-                            <input type="email" className="form-input" defaultValue={email} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+                            <input type="email" className="form-input" value={email} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Phone Number</label>
-                            <input type="text" className="form-input" defaultValue={phone} />
+                            <input
+                                type="text"
+                                className="form-input"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={handleInputChange}
+                                placeholder="0917-123-4567"
+                            />
                         </div>
                     </div>
 
@@ -116,16 +259,28 @@ export const MyProfile = () => {
                         <div className="form-group">
                             <label className="form-label">Birth Date</label>
                             <div style={{ position: 'relative' }}>
-                                <input type="text" className="form-input" defaultValue="01/15/1990" />
-                                <Calendar size={16} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }} />
+                                <input
+                                    type="date"
+                                    className="form-input"
+                                    name="birth_date"
+                                    value={formData.birth_date}
+                                    onChange={handleInputChange}
+                                />
                             </div>
                         </div>
                         <div className="form-group">
                             <label className="form-label">Cluster</label>
                             <div style={{ position: 'relative' }}>
-                                <select className="form-input" style={{ appearance: 'none' }} defaultValue={cluster}>
-                                    <option>Cluster A</option>
-                                    <option>Cluster B</option>
+                                <select
+                                    className="form-input"
+                                    style={{ appearance: 'none' }}
+                                    name="cluster"
+                                    value={formData.cluster}
+                                    onChange={handleInputChange}
+                                >
+                                    <option value="Cluster A">Cluster A</option>
+                                    <option value="Cluster B">Cluster B</option>
+                                    <option value="Cluster C">Cluster C</option>
                                 </select>
                                 <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', pointerEvents: 'none' }}>▼</div>
                             </div>
@@ -133,7 +288,13 @@ export const MyProfile = () => {
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <button className="btn-primary">Save Changes</button>
+                        <button
+                            className="btn-primary"
+                            onClick={handleSaveProfile}
+                            disabled={isUpdating}
+                        >
+                            {isUpdating ? 'Saving...' : 'Save Changes'}
+                        </button>
                     </div>
                 </div>
 
@@ -146,22 +307,49 @@ export const MyProfile = () => {
 
                     <div className="form-group">
                         <label className="form-label">Current Password</label>
-                        <input type="password" className="form-input" placeholder="••••••••" />
+                        <input
+                            type="password"
+                            className="form-input"
+                            name="currentPassword"
+                            value={passwordData.currentPassword}
+                            onChange={handlePasswordChange}
+                            placeholder="••••••••"
+                        />
                     </div>
 
                     <div className="form-grid-2">
                         <div className="form-group">
                             <label className="form-label">New Password</label>
-                            <input type="password" className="form-input" placeholder="••••••••" />
+                            <input
+                                type="password"
+                                className="form-input"
+                                name="newPassword"
+                                value={passwordData.newPassword}
+                                onChange={handlePasswordChange}
+                                placeholder="••••••••"
+                            />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Confirm New Password</label>
-                            <input type="password" className="form-input" placeholder="••••••••" />
+                            <input
+                                type="password"
+                                className="form-input"
+                                name="confirmPassword"
+                                value={passwordData.confirmPassword}
+                                onChange={handlePasswordChange}
+                                placeholder="••••••••"
+                            />
                         </div>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <button className="btn-primary">Update Password</button>
+                        <button
+                            className="btn-primary"
+                            onClick={handleChangePassword}
+                            disabled={isChangingPassword}
+                        >
+                            {isChangingPassword ? 'Updating...' : 'Update Password'}
+                        </button>
                     </div>
                 </div>
 

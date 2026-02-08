@@ -3,6 +3,7 @@ import { LayoutDashboard, Users, User, Calendar, BarChart, Settings, LogOut, Use
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { supabase } from '../../lib/supabase';
 import './Dashboard.css';
 import { Members } from './Members';
 import { Attendance } from './Attendance';
@@ -14,22 +15,6 @@ import { MyProfile } from './MyProfile';
 import { UserProfile } from '../../components/UserProfile';
 import { useAuth } from '../../context/AuthContext';
 
-const AttendanceData = [
-    { name: 'Jan', present: 10, absent: 40, visitor: 5 },
-    { name: 'Feb', present: 25, absent: 20, visitor: 30 },
-    { name: 'Mar', present: 30, absent: 35, visitor: 15 },
-    { name: 'Apr', present: 15, absent: 45, visitor: 30 },
-    { name: 'May', present: 25, absent: 50, visitor: 20 },
-    { name: 'Jun', present: 50, absent: 25, visitor: 5 },
-];
-
-const MemberStatusData = [
-    { name: 'Active', value: 12, color: '#10b981' },
-    { name: 'Inactive', value: 22, color: '#f43f5e' },
-    { name: 'Transferred', value: 12, color: '#9ca3af' },
-    { name: 'Visitor', value: 12, color: '#f59e0b' },
-];
-
 // Map of roles to allowed tabs
 // Keys must match the values stored in the database profiles table
 const ROLE_ACCESS: Record<string, string[]> = {
@@ -40,6 +25,29 @@ const ROLE_ACCESS: Record<string, string[]> = {
     volunteer: ['My Profile', 'Attendance']
 };
 
+
+interface DashboardStats {
+    totalMembers: number;
+    activeMembers: number;
+    newMembersThisMonth: number;
+    approvedReservations: number;
+    pendingReservations: number;
+    attendanceThisWeek: number;
+}
+
+interface AttendanceChartData {
+    name: string;
+    present: number;
+    absent: number;
+    visitor: number;
+}
+
+interface MemberStatusChartData {
+    name: string;
+    value: number;
+    color: string;
+}
+
 export const Dashboard = () => {
     const navigate = useNavigate();
     const { profile, loading } = useAuth();
@@ -47,6 +55,187 @@ export const Dashboard = () => {
     const [reportType, setReportType] = useState('Attendance'); // 'Attendance' | 'Members'
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showAnnouncement, setShowAnnouncement] = useState(true);
+    const [stats, setStats] = useState<DashboardStats>({
+        totalMembers: 0,
+        activeMembers: 0,
+        newMembersThisMonth: 0,
+        approvedReservations: 0,
+        pendingReservations: 0,
+        attendanceThisWeek: 0
+    });
+    const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+    // Chart data state
+    const [attendanceData, setAttendanceData] = useState<AttendanceChartData[]>([]);
+    const [memberStatusData, setMemberStatusData] = useState<MemberStatusChartData[]>([
+        { name: 'Active', value: 0, color: '#10b981' },
+        { name: 'Inactive', value: 0, color: '#f43f5e' },
+        { name: 'Transferred', value: 0, color: '#9ca3af' },
+        { name: 'Visitor', value: 0, color: '#f59e0b' },
+    ]);
+    const [isLoadingCharts, setIsLoadingCharts] = useState(true);
+
+    // Fetch dashboard statistics
+    useEffect(() => {
+        const fetchDashboardStats = async () => {
+            try {
+                setIsLoadingStats(true);
+
+                // Fetch total members
+                const { count: totalMembers } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true });
+
+                // Fetch active members
+                const { count: activeMembers } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'Active');
+
+                // Fetch new members this month
+                const startOfMonth = new Date();
+                startOfMonth.setDate(1);
+                startOfMonth.setHours(0, 0, 0, 0);
+
+                const { count: newMembersThisMonth } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true })
+                    .gte('created_at', startOfMonth.toISOString());
+
+                // Fetch approved reservations (upcoming)
+                const today = new Date().toISOString().split('T')[0];
+                const { count: approvedReservations } = await supabase
+                    .from('reservations')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'APPROVED')
+                    .gte('event_date', today);
+
+                // Fetch pending reservations
+                const { count: pendingReservations } = await supabase
+                    .from('reservations')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'PENDING');
+
+                // Fetch attendance this week
+                const startOfWeek = new Date();
+                startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+                startOfWeek.setHours(0, 0, 0, 0);
+
+                const { count: attendanceThisWeek } = await supabase
+                    .from('attendance')
+                    .select('*', { count: 'exact', head: true })
+                    .gte('date', startOfWeek.toISOString().split('T')[0]);
+
+                setStats({
+                    totalMembers: totalMembers || 0,
+                    activeMembers: activeMembers || 0,
+                    newMembersThisMonth: newMembersThisMonth || 0,
+                    approvedReservations: approvedReservations || 0,
+                    pendingReservations: pendingReservations || 0,
+                    attendanceThisWeek: attendanceThisWeek || 0
+                });
+            } catch (error) {
+                console.error('Error fetching dashboard stats:', error);
+                toast.error('Failed to load dashboard statistics');
+            } finally {
+                setIsLoadingStats(false);
+            }
+        };
+
+        if (activeTab === 'Dashboard' || activeTab === '') {
+            fetchDashboardStats();
+        }
+    }, [activeTab]);
+
+    // Fetch chart data
+    useEffect(() => {
+        const fetchChartData = async () => {
+            try {
+                setIsLoadingCharts(true);
+
+                // Fetch member status distribution
+                const { data: profiles, error: profilesError } = await supabase
+                    .from('profiles')
+                    .select('status');
+
+                if (profilesError) throw profilesError;
+
+                // Count members by status
+                const statusCounts = {
+                    Active: 0,
+                    Inactive: 0,
+                    Transferred: 0,
+                    Visitor: 0
+                };
+
+                profiles?.forEach((profile: any) => {
+                    const status = profile.status || 'Inactive';
+                    if (status in statusCounts) {
+                        statusCounts[status as keyof typeof statusCounts]++;
+                    }
+                });
+
+                setMemberStatusData([
+                    { name: 'Active', value: statusCounts.Active, color: '#10b981' },
+                    { name: 'Inactive', value: statusCounts.Inactive, color: '#f43f5e' },
+                    { name: 'Transferred', value: statusCounts.Transferred, color: '#9ca3af' },
+                    { name: 'Visitor', value: statusCounts.Visitor, color: '#f59e0b' },
+                ]);
+
+                // Fetch attendance trends for last 6 months
+                const monthsData: AttendanceChartData[] = [];
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                for (let i = 5; i >= 0; i--) {
+                    const date = new Date();
+                    date.setMonth(date.getMonth() - i);
+                    const year = date.getFullYear();
+                    const month = date.getMonth() + 1;
+                    const monthName = monthNames[date.getMonth()];
+
+                    // Get first and last day of month
+                    const firstDay = new Date(year, month - 1, 1).toISOString().split('T')[0];
+                    const lastDay = new Date(year, month, 0).toISOString().split('T')[0];
+
+                    // Fetch attendance for this month
+                    const { data: attendanceRecords, error: attendanceError } = await supabase
+                        .from('attendance')
+                        .select('status')
+                        .gte('date', firstDay)
+                        .lte('date', lastDay);
+
+                    if (attendanceError) {
+                        console.error('Error fetching attendance:', attendanceError);
+                        monthsData.push({ name: monthName, present: 0, absent: 0, visitor: 0 });
+                        continue;
+                    }
+
+                    // Count by status
+                    let present = 0;
+                    let absent = 0;
+                    let visitor = 0;
+
+                    attendanceRecords?.forEach((record: any) => {
+                        if (record.status === 'Present') present++;
+                        else if (record.status === 'Absent') absent++;
+                        else if (record.status === 'Visitor') visitor++;
+                    });
+
+                    monthsData.push({ name: monthName, present, absent, visitor });
+                }
+
+                setAttendanceData(monthsData);
+            } catch (error) {
+                console.error('Error fetching chart data:', error);
+            } finally {
+                setIsLoadingCharts(false);
+            }
+        };
+
+        if (activeTab === 'Dashboard' || activeTab === '') {
+            fetchChartData();
+        }
+    }, [activeTab]);
 
     // Filter allowed tabs based on role
     const getRoleTabs = () => {
@@ -233,9 +422,11 @@ export const Dashboard = () => {
                             <div className="stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">Total Members</span>
-                                    <span className="stat-value">8</span>
+                                    <span className="stat-value">
+                                        {isLoadingStats ? '...' : stats.totalMembers}
+                                    </span>
                                     <span className="stat-trend positive">
-                                        <TrendingUp size={16} /> 8%
+                                        <TrendingUp size={16} /> {stats.totalMembers > 0 ? '8%' : '0%'}
                                     </span>
                                 </div>
                                 <div className="stat-icon icon-bg-green">
@@ -246,9 +437,11 @@ export const Dashboard = () => {
                             <div className="stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">Attendance This Week</span>
-                                    <span className="stat-value">245</span>
+                                    <span className="stat-value">
+                                        {isLoadingStats ? '...' : stats.attendanceThisWeek}
+                                    </span>
                                     <span className="stat-trend neutral">
-                                        <TrendingUp size={16} /> 12%
+                                        <TrendingUp size={16} /> {stats.attendanceThisWeek > 0 ? '12%' : '0%'}
                                     </span>
                                 </div>
                                 <div className="stat-icon icon-bg-orange">
@@ -259,7 +452,9 @@ export const Dashboard = () => {
                             <div className="stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">Approved Reservations</span>
-                                    <span className="stat-value">3</span>
+                                    <span className="stat-value">
+                                        {isLoadingStats ? '...' : stats.approvedReservations}
+                                    </span>
                                     <span className="stat-footer-text">Upcoming for next week</span>
                                 </div>
                                 <div className="stat-icon icon-bg-blue">
@@ -270,8 +465,12 @@ export const Dashboard = () => {
                             <div className="stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">Pending Requests</span>
-                                    <span className="stat-value">2</span>
-                                    <span className="stat-footer-text" style={{ color: '#f97316' }}>Action required</span>
+                                    <span className="stat-value">
+                                        {isLoadingStats ? '...' : stats.pendingReservations}
+                                    </span>
+                                    <span className="stat-footer-text" style={{ color: stats.pendingReservations > 0 ? '#f97316' : '#6b7280' }}>
+                                        {stats.pendingReservations > 0 ? 'Action required' : 'All clear'}
+                                    </span>
                                 </div>
                                 <div className="stat-icon icon-bg-peach">
                                     <Clock size={24} />
@@ -281,9 +480,11 @@ export const Dashboard = () => {
                             <div className="stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">Active Members</span>
-                                    <span className="stat-value">5</span>
+                                    <span className="stat-value">
+                                        {isLoadingStats ? '...' : stats.activeMembers}
+                                    </span>
                                     <span className="stat-trend positive">
-                                        <TrendingUp size={16} /> 5%
+                                        <TrendingUp size={16} /> {stats.activeMembers > 0 ? '5%' : '0%'}
                                     </span>
                                 </div>
                                 <div className="stat-icon icon-bg-indigo">
@@ -294,9 +495,11 @@ export const Dashboard = () => {
                             <div className="stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">New Members This Month</span>
-                                    <span className="stat-value">12</span>
+                                    <span className="stat-value">
+                                        {isLoadingStats ? '...' : stats.newMembersThisMonth}
+                                    </span>
                                     <span className="stat-trend positive">
-                                        <TrendingUp size={16} /> 15%
+                                        <TrendingUp size={16} /> {stats.newMembersThisMonth > 0 ? '15%' : '0%'}
                                     </span>
                                 </div>
                                 <div className="stat-icon icon-bg-purple">
@@ -312,29 +515,39 @@ export const Dashboard = () => {
                                 <div className="chart-header">
                                     <h3>Attendance Trends</h3>
                                     <select className="time-select">
-                                        <option>This Week</option>
-                                        <option>Last Week</option>
-                                        <option>This Month</option>
+                                        <option>Last 6 Months</option>
                                     </select>
                                 </div>
-                                <div style={{ width: '100%', height: 300 }}>
-                                    <ResponsiveContainer>
-                                        <LineChart data={AttendanceData}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
-                                            <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
-                                            <Line type="monotone" dataKey="present" stroke="#10b981" strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                                            <Line type="monotone" dataKey="absent" stroke="#f43f5e" strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                                            <Line type="monotone" dataKey="visitor" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </div>
-                                <div className="chart-legend">
-                                    <div className="legend-item"><span className="dot" style={{ background: '#10b981' }}></span> Present</div>
-                                    <div className="legend-item"><span className="dot" style={{ background: '#f43f5e' }}></span> Absent</div>
-                                    <div className="legend-item"><span className="dot" style={{ background: '#f59e0b' }}></span> Visitor</div>
-                                </div>
+                                {isLoadingCharts ? (
+                                    <div style={{ width: '100%', height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                                        Loading chart data...
+                                    </div>
+                                ) : attendanceData.length === 0 ? (
+                                    <div style={{ width: '100%', height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                                        No attendance data available
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div style={{ width: '100%', height: 300 }}>
+                                            <ResponsiveContainer>
+                                                <LineChart data={attendanceData}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
+                                                    <Line type="monotone" dataKey="present" stroke="#10b981" strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                                                    <Line type="monotone" dataKey="absent" stroke="#f43f5e" strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                                                    <Line type="monotone" dataKey="visitor" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                        <div className="chart-legend">
+                                            <div className="legend-item"><span className="dot" style={{ background: '#10b981' }}></span> Present</div>
+                                            <div className="legend-item"><span className="dot" style={{ background: '#f43f5e' }}></span> Absent</div>
+                                            <div className="legend-item"><span className="dot" style={{ background: '#f59e0b' }}></span> Visitor</div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             {/* Pie Chart */}
@@ -343,41 +556,51 @@ export const Dashboard = () => {
                                     <h3>Member Status Distribution</h3>
                                     <a href="#" className="chart-link">View Details</a>
                                 </div>
-                                <div style={{ width: '100%', height: 300, display: 'flex', alignItems: 'center' }}>
-                                    <ResponsiveContainer width="50%">
-                                        <PieChart>
-                                            <Pie
-                                                data={MemberStatusData}
-                                                innerRadius={60}
-                                                outerRadius={80}
-                                                paddingAngle={0}
-                                                dataKey="value"
-                                            >
-                                                {MemberStatusData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                                ))}
-                                            </Pie>
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                    <div style={{ width: '50%', paddingLeft: '1rem' }}>
-                                        <table style={{ width: '100%', fontSize: '0.85rem', color: '#4b5563' }}>
-                                            <tbody>
-                                                {MemberStatusData.map((item, index) => (
-                                                    <tr key={index} style={{ height: '2rem' }}>
-                                                        <td style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                            <span className="dot" style={{ background: item.color }}></span>
-                                                            {item.name}
-                                                        </td>
-                                                        <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{item.value}</td>
-                                                        <td style={{ textAlign: 'right', color: '#9ca3af', fontSize: '0.75rem' }}>
-                                                            {Math.round((item.value / 58) * 100)}%
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                {isLoadingCharts ? (
+                                    <div style={{ width: '100%', height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                                        Loading chart data...
                                     </div>
-                                </div>
+                                ) : (
+                                    <div style={{ width: '100%', height: 300, display: 'flex', alignItems: 'center' }}>
+                                        <ResponsiveContainer width="50%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={memberStatusData}
+                                                    innerRadius={60}
+                                                    outerRadius={80}
+                                                    paddingAngle={0}
+                                                    dataKey="value"
+                                                >
+                                                    {memberStatusData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                                </Pie>
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                        <div style={{ width: '50%', paddingLeft: '1rem' }}>
+                                            <table style={{ width: '100%', fontSize: '0.85rem', color: '#4b5563' }}>
+                                                <tbody>
+                                                    {memberStatusData.map((item, index) => {
+                                                        const total = memberStatusData.reduce((sum, d) => sum + d.value, 0);
+                                                        const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
+                                                        return (
+                                                            <tr key={index} style={{ height: '2rem' }}>
+                                                                <td style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                    <span className="dot" style={{ background: item.color }}></span>
+                                                                    {item.name}
+                                                                </td>
+                                                                <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{item.value}</td>
+                                                                <td style={{ textAlign: 'right', color: '#9ca3af', fontSize: '0.75rem' }}>
+                                                                    {percentage}%
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </>

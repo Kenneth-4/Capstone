@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.1.0</span>
+                            <span className="version-number">v1.0.5</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,25 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 8, 2026</span>
+                                <h4 className="update-title">Reports & Analytics Complete 📊</h4>
+                                <p>Comprehensive reporting system with real-time data visualization and dynamic filtering.</p>
+                                <ul className="feature-list">
+                                    <li>📈 <strong>Attendance Reports:</strong> Real-time attendance statistics with trends and cluster analysis.</li>
+                                    <li>📅 <strong>Date Filtering:</strong> Filter reports by Today, This Week, This Month, Last 6 Months, and more.</li>
+                                    <li>📊 <strong>Interactive Charts:</strong> Line charts for trends, bar charts for clusters, with tooltips and legends.</li>
+                                    <li>👥 <strong>Member Reports:</strong> Status distribution, registration trends, and detailed member lists.</li>
+                                    <li>🎯 <strong>Cluster Analytics:</strong> Real attendance tracking per cluster with dynamic filtering.</li>
+                                    <li>🔍 <strong>Search & Pagination:</strong> Find specific events and navigate through attendance logs.</li>
+                                    <li>📱 <strong>Loading States:</strong> Smooth loading indicators and empty state handling.</li>
+                                    <li>🎨 <strong>Enhanced Design:</strong> Modern tooltips, legends, and visual feedback throughout.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 8, 2026</span>
                                 <h4 className="update-title">Reservation System Complete 📅</h4>

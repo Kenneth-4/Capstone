@@ -4,6 +4,9 @@ export interface Profile {
     full_name: string;
     role: string;
     avatar_url?: string;
+    phone?: string;
+    birth_date?: string;
+    cluster?: string;
     created_at?: string;
 }
 
