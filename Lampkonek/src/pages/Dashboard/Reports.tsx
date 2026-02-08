@@ -4,8 +4,6 @@ import {
     Download,
     ChevronLeft,
     ChevronRight,
-    Moon,
-    Settings
 } from 'lucide-react';
 import {
     LineChart,
@@ -63,7 +61,7 @@ export const Reports = () => {
     const [clusterData, setClusterData] = useState<ClusterData[]>([]);
     const [logsData, setLogsData] = useState<AttendanceLog[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [dateFilter, setDateFilter] = useState('This Week');
     const itemsPerPage = 5;

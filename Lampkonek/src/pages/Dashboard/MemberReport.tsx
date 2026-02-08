@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
     Download,
     ChevronDown,
-    Settings,
     TrendingUp,
     CheckCircle2
 } from 'lucide-react';
