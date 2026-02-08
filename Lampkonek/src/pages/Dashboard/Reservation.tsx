@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Moon,
     Plus,
@@ -10,72 +10,176 @@ import {
     PartyPopper,
     Clock,
     MapPin,
-    User as UserIcon
+    User as UserIcon,
+    X
 } from 'lucide-react';
 import './Reservation.css';
 import { NewReservationModal } from './NewReservationModal';
 import { UserProfile } from '../../components/UserProfile';
+import { supabase } from '../../lib/supabase';
+import toast from 'react-hot-toast';
 
-// Mock Data
-const upcomingReservations = [
-    {
-        id: 1,
-        title: 'Coordinator Meetings',
-        date: '2024-12-15',
-        time: '02:00 PM',
-        location: 'Main Sanctuary',
-        organizer: 'Maria Santos',
-        status: 'APPROVED',
-        icon: CalendarIcon,
-        iconClass: 'icon-green'
-    },
-    {
-        id: 2,
-        title: 'Youth Fellowship',
-        date: '2024-11-25',
-        time: '06:00 PM',
-        location: 'Fellowship Hall',
-        organizer: 'Juan Dela Cruz',
-        status: 'APPROVED',
-        icon: Users,
-        iconClass: 'icon-green'
-    },
-    {
-        id: 3,
-        title: 'Cluster Leader Seminar',
-        date: '2024-11-30',
-        time: '03:00 PM',
-        location: 'Multi-purpose Room',
-        organizer: 'Rosa Martinez',
-        status: 'PENDING',
-        icon: GraduationCap,
-        iconClass: 'icon-orange' // Simulating the yellowish icon from image
-    },
-    {
-        id: 4,
-        title: 'YP Culminating Activity',
-        date: '2024-12-01',
-        time: '08:00 PM',
-        location: 'Prayer Room',
-        organizer: 'Miguel Torres',
-        status: 'APPROVED',
-        icon: PartyPopper,
-        iconClass: 'icon-green'
-    }
-];
+interface Reservation {
+    id: string;
+    event_title: string;
+    event_date: string;
+    start_time: string;
+    end_time: string;
+    venue: string;
+    organizer_name: string;
+    status: string;
+    purpose: string;
+    expected_attendees: number;
+    setup_required?: string;
+    equipment_needed?: string[];
+    additional_notes?: string;
+}
+
+// Icon mapping for different event types
+const getIconForEvent = (title: string) => {
+    const lowerTitle = title.toLowerCase();
+    if (lowerTitle.includes('youth') || lowerTitle.includes('yp')) return Users;
+    if (lowerTitle.includes('seminar') || lowerTitle.includes('training')) return GraduationCap;
+    if (lowerTitle.includes('party') || lowerTitle.includes('celebration') || lowerTitle.includes('culminating')) return PartyPopper;
+    return CalendarIcon;
+};
 
 // Simple Calendar Grid Mock
 const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-const dates = [
-    1, 2, 3, 4, 5, 6, 7,
-    8, 9, 10, 11, 12, 13, 14,
-    15, 16, 17, 18, 19, 20, 21,
-    22, 23, 24, 25, 26, 27, 28,
-    29, 30, 31
-];
 
 export const Reservation = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [reservations, setReservations] = useState<Reservation[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    // Calendar state
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState<number | null>(null);
+
+    useEffect(() => {
+        fetchReservations();
+    }, []);
+
+    const fetchReservations = async () => {
+        try {
+            setIsLoading(true);
+            const { data, error } = await supabase
+                .from('reservations')
+                .select('*')
+                .order('event_date', { ascending: true })
+                .order('start_time', { ascending: true });
+
+            if (error) throw error;
+
+            setReservations(data || []);
+        } catch (error: any) {
+            console.error('Error fetching reservations:', error);
+            toast.error('Failed to load reservations');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Calendar functions
+    const getDaysInMonth = (date: Date) => {
+        return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    };
+
+    const getFirstDayOfMonth = (date: Date) => {
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+        return firstDay === 0 ? 6 : firstDay - 1; // Convert Sunday=0 to Monday=0
+    };
+
+    const navigateMonth = (direction: 'prev' | 'next') => {
+        setCurrentDate(prev => {
+            const newDate = new Date(prev);
+            if (direction === 'prev') {
+                newDate.setMonth(newDate.getMonth() - 1);
+            } else {
+                newDate.setMonth(newDate.getMonth() + 1);
+            }
+            return newDate;
+        });
+        setSelectedDate(null);
+    };
+
+    const getReservationsForDate = (date: number) => {
+        const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+        return reservations.filter(res => res.event_date === dateStr);
+    };
+
+    const hasReservationOnDate = (date: number) => {
+        return getReservationsForDate(date).length > 0;
+    };
+
+    // Generate calendar dates
+    const daysInMonth = getDaysInMonth(currentDate);
+    const firstDayOffset = getFirstDayOfMonth(currentDate);
+    const calendarDates = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    const emptySlots = Array.from({ length: firstDayOffset }, (_, i) => i);
+
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+    const currentMonthYear = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+    // Handle reservation status update
+    const handleStatusUpdate = async (status: 'APPROVED' | 'REJECTED') => {
+        if (!selectedReservation) return;
+
+        const confirmMessage = status === 'APPROVED'
+            ? `Approve reservation for "${selectedReservation.event_title}"?`
+            : `Reject reservation for "${selectedReservation.event_title}"?`;
+
+        if (!window.confirm(confirmMessage)) return;
+
+        setIsUpdating(true);
+        try {
+            const { error } = await supabase
+                .from('reservations')
+                .update({ status })
+                .eq('id', selectedReservation.id);
+
+            if (error) throw error;
+
+            toast.success(`Reservation ${status.toLowerCase()} successfully!`);
+            setIsDetailsModalOpen(false);
+            setSelectedReservation(null);
+            fetchReservations();
+        } catch (error: any) {
+            console.error('Error updating reservation:', error);
+            toast.error(error.message || 'Failed to update reservation');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleReservationClick = (reservation: Reservation) => {
+        setSelectedReservation(reservation);
+        setIsDetailsModalOpen(true);
+    };
+
+    // Filter reservations based on search
+    const filteredReservations = reservations.filter(res =>
+        res.event_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        res.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        res.venue.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Calculate stats
+    const stats = {
+        total: reservations.length,
+        approved: reservations.filter(r => r.status === 'APPROVED').length,
+        pending: reservations.filter(r => r.status === 'PENDING').length,
+        rejected: reservations.filter(r => r.status === 'REJECTED').length
+    };
+
+    // Get upcoming reservations (future dates only)
+    const today = new Date().toISOString().split('T')[0];
+    const upcomingReservations = filteredReservations.filter(res => res.event_date >= today);
 
     return (
         <div className="reservation-content">
@@ -97,7 +201,13 @@ export const Reservation = () => {
             <div className="reservation-container">
                 {/* Controls */}
                 <div className="reservation-controls">
-                    <input type="text" className="res-search-input" placeholder="Search by ID or Type..." />
+                    <input
+                        type="text"
+                        className="res-search-input"
+                        placeholder="Search by ID or Type..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                     <button className="add-res-btn" onClick={() => setIsModalOpen(true)}>
                         <Plus size={18} />
                         Add Reservation
@@ -108,19 +218,19 @@ export const Reservation = () => {
                 <div className="res-stats-grid">
                     <div className="res-stat-card">
                         <span className="res-stat-title">Total Reservation</span>
-                        <span className="res-stat-value">6</span>
+                        <span className="res-stat-value">{stats.total}</span>
                     </div>
                     <div className="res-stat-card">
                         <span className="res-stat-title">Approved</span>
-                        <span className="res-stat-value">2</span>
+                        <span className="res-stat-value">{stats.approved}</span>
                     </div>
                     <div className="res-stat-card">
                         <span className="res-stat-title">Pending</span>
-                        <span className="res-stat-value">3</span>
+                        <span className="res-stat-value">{stats.pending}</span>
                     </div>
                     <div className="res-stat-card">
                         <span className="res-stat-title">Rejected</span>
-                        <span className="res-stat-value">1</span>
+                        <span className="res-stat-value">{stats.rejected}</span>
                     </div>
                 </div>
 
@@ -133,10 +243,14 @@ export const Reservation = () => {
                         </div>
 
                         <div className="calendar-header" style={{ marginBottom: '1rem' }}>
-                            <span className="calendar-nav-title">May 2023</span>
+                            <span className="calendar-nav-title">{currentMonthYear}</span>
                             <div className="calendar-nav-btns">
-                                <button className="c-nav-btn"><ChevronLeft size={16} /></button>
-                                <button className="c-nav-btn"><ChevronRight size={16} /></button>
+                                <button className="c-nav-btn" onClick={() => navigateMonth('prev')}>
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <button className="c-nav-btn" onClick={() => navigateMonth('next')}>
+                                    <ChevronRight size={16} />
+                                </button>
                             </div>
                         </div>
 
@@ -144,11 +258,27 @@ export const Reservation = () => {
                             {days.map(day => (
                                 <div key={day} className="c-day-label">{day}</div>
                             ))}
-                            {dates.map(date => (
-                                <div key={date} className={`c-date ${date === 18 ? 'active' : ''}`}>
-                                    {date}
-                                </div>
+                            {emptySlots.map(slot => (
+                                <div key={`empty-${slot}`} className="c-date empty"></div>
                             ))}
+                            {calendarDates.map(date => {
+                                const hasReservation = hasReservationOnDate(date);
+                                const isSelected = selectedDate === date;
+                                const isToday = new Date().getDate() === date &&
+                                    new Date().getMonth() === currentDate.getMonth() &&
+                                    new Date().getFullYear() === currentDate.getFullYear();
+
+                                return (
+                                    <div
+                                        key={date}
+                                        className={`c-date ${isSelected ? 'active' : ''} ${isToday ? 'today' : ''} ${hasReservation ? 'has-event' : ''}`}
+                                        onClick={() => setSelectedDate(date)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {date}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -157,39 +287,235 @@ export const Reservation = () => {
                         <h3 className="section-title">Upcoming Reservations</h3>
 
                         <div className="res-list">
-                            {upcomingReservations.map(res => (
-                                <div key={res.id} className="res-card">
-                                    <div className={`res-icon-box ${res.iconClass}`}>
-                                        <res.icon size={24} />
-                                    </div>
-                                    <div className="res-details">
-                                        <span className="res-name">{res.title}</span>
-                                        <div className="res-meta">
-                                            <div className="res-meta-item">
-                                                <Clock size={14} />
-                                                <span>{res.date} • {res.time}</span>
-                                            </div>
-                                            <div className="res-meta-item">
-                                                <MapPin size={14} />
-                                                <span>{res.location}</span>
-                                            </div>
-                                            <div className="res-meta-item">
-                                                <UserIcon size={14} />
-                                                <span>{res.organizer}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <span className={`res-badge ${res.status === 'APPROVED' ? 'badge-approved' : 'badge-pending'}`}>
-                                        {res.status}
-                                    </span>
+                            {isLoading ? (
+                                <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
+                                    Loading reservations...
                                 </div>
-                            ))}
+                            ) : upcomingReservations.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
+                                    {searchQuery ? 'No reservations found matching your search' : 'No upcoming reservations'}
+                                </div>
+                            ) : (
+                                upcomingReservations.map(res => {
+                                    const Icon = getIconForEvent(res.event_title);
+                                    const iconClass = res.status === 'APPROVED' ? 'icon-green' :
+                                        res.status === 'PENDING' ? 'icon-orange' : 'icon-red';
+
+                                    // Format time from 24h to 12h
+                                    const formatTime = (time: string) => {
+                                        const [hours, minutes] = time.split(':');
+                                        const hour = parseInt(hours);
+                                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                                        const displayHour = hour % 12 || 12;
+                                        return `${displayHour}:${minutes} ${ampm}`;
+                                    };
+
+                                    return (
+                                        <div
+                                            key={res.id}
+                                            className="res-card"
+                                            onClick={() => handleReservationClick(res)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            <div className={`res-icon-box ${iconClass}`}>
+                                                <Icon size={24} />
+                                            </div>
+                                            <div className="res-details">
+                                                <span className="res-name">{res.event_title}</span>
+                                                <div className="res-meta">
+                                                    <div className="res-meta-item">
+                                                        <Clock size={14} />
+                                                        <span>{res.event_date} • {formatTime(res.start_time)}</span>
+                                                    </div>
+                                                    <div className="res-meta-item">
+                                                        <MapPin size={14} />
+                                                        <span>{res.venue}</span>
+                                                    </div>
+                                                    <div className="res-meta-item">
+                                                        <UserIcon size={14} />
+                                                        <span>{res.organizer_name}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span className={`res-badge ${res.status === 'APPROVED' ? 'badge-approved' :
+                                                res.status === 'PENDING' ? 'badge-pending' : 'badge-rejected'
+                                                }`}>
+                                                {res.status}
+                                            </span>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <NewReservationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <NewReservationModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={fetchReservations}
+            />
+
+            {/* Reservation Details Modal */}
+            {isDetailsModalOpen && selectedReservation && (
+                <div className="modal-backdrop" onClick={() => setIsDetailsModalOpen(false)}>
+                    <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                        <div className="modal-header">
+                            <h2>Reservation Details</h2>
+                            <button className="close-btn" onClick={() => setIsDetailsModalOpen(false)}>
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="modal-body" style={{ padding: '1.5rem' }}>
+                            {/* Event Title */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1f2937', marginBottom: '0.5rem' }}>
+                                    {selectedReservation.event_title}
+                                </h3>
+                                <span className={`res-badge ${selectedReservation.status === 'APPROVED' ? 'badge-approved' :
+                                    selectedReservation.status === 'PENDING' ? 'badge-pending' : 'badge-rejected'
+                                    }`}>
+                                    {selectedReservation.status}
+                                </span>
+                            </div>
+
+                            {/* Details Grid */}
+                            <div style={{ display: 'grid', gap: '1rem', marginBottom: '1.5rem' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', marginBottom: '0.25rem' }}>
+                                        Venue
+                                    </label>
+                                    <p style={{ fontSize: '1rem', color: '#1f2937' }}>{selectedReservation.venue}</p>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', marginBottom: '0.25rem' }}>
+                                            Date
+                                        </label>
+                                        <p style={{ fontSize: '1rem', color: '#1f2937' }}>{selectedReservation.event_date}</p>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', marginBottom: '0.25rem' }}>
+                                            Time
+                                        </label>
+                                        <p style={{ fontSize: '1rem', color: '#1f2937' }}>
+                                            {selectedReservation.start_time} - {selectedReservation.end_time}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', marginBottom: '0.25rem' }}>
+                                        Organizer
+                                    </label>
+                                    <p style={{ fontSize: '1rem', color: '#1f2937' }}>{selectedReservation.organizer_name}</p>
+                                </div>
+
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', marginBottom: '0.25rem' }}>
+                                        Expected Attendees
+                                    </label>
+                                    <p style={{ fontSize: '1rem', color: '#1f2937' }}>{selectedReservation.expected_attendees}</p>
+                                </div>
+
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', marginBottom: '0.25rem' }}>
+                                        Purpose
+                                    </label>
+                                    <p style={{ fontSize: '1rem', color: '#1f2937', whiteSpace: 'pre-wrap' }}>{selectedReservation.purpose}</p>
+                                </div>
+
+                                {selectedReservation.setup_required && (
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', marginBottom: '0.25rem' }}>
+                                            Setup Required
+                                        </label>
+                                        <p style={{ fontSize: '1rem', color: '#1f2937' }}>{selectedReservation.setup_required}</p>
+                                    </div>
+                                )}
+
+                                {selectedReservation.equipment_needed && selectedReservation.equipment_needed.length > 0 && (
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', marginBottom: '0.25rem' }}>
+                                            Equipment Needed
+                                        </label>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                            {selectedReservation.equipment_needed.map((equip, idx) => (
+                                                <span
+                                                    key={idx}
+                                                    style={{
+                                                        padding: '0.25rem 0.75rem',
+                                                        backgroundColor: '#e0e7ff',
+                                                        color: '#4338ca',
+                                                        borderRadius: '9999px',
+                                                        fontSize: '0.875rem'
+                                                    }}
+                                                >
+                                                    {equip}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {selectedReservation.additional_notes && (
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', marginBottom: '0.25rem' }}>
+                                            Additional Notes
+                                        </label>
+                                        <p style={{ fontSize: '1rem', color: '#1f2937', whiteSpace: 'pre-wrap' }}>{selectedReservation.additional_notes}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Action Buttons (Only for PENDING status) */}
+                            {selectedReservation.status === 'PENDING' && (
+                                <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                                    <button
+                                        onClick={() => handleStatusUpdate('REJECTED')}
+                                        disabled={isUpdating}
+                                        style={{
+                                            flex: 1,
+                                            padding: '0.75rem 1.5rem',
+                                            backgroundColor: '#ef4444',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '0.5rem',
+                                            fontSize: '1rem',
+                                            fontWeight: 500,
+                                            cursor: isUpdating ? 'not-allowed' : 'pointer',
+                                            opacity: isUpdating ? 0.6 : 1
+                                        }}
+                                    >
+                                        {isUpdating ? 'Updating...' : 'Reject'}
+                                    </button>
+                                    <button
+                                        onClick={() => handleStatusUpdate('APPROVED')}
+                                        disabled={isUpdating}
+                                        style={{
+                                            flex: 1,
+                                            padding: '0.75rem 1.5rem',
+                                            backgroundColor: '#10b981',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '0.5rem',
+                                            fontSize: '1rem',
+                                            fontWeight: 500,
+                                            cursor: isUpdating ? 'not-allowed' : 'pointer',
+                                            opacity: isUpdating ? 0.6 : 1
+                                        }}
+                                    >
+                                        {isUpdating ? 'Updating...' : 'Approve'}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

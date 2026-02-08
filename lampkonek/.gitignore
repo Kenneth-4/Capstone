@@ -31,3 +31,4 @@ dist-ssr
 .supabase_admin_delete_policy.sql
 .supabase_update_members.sql
 .supabase_admin_insert_policy.sql
+.supabase_reservations_setup.sql

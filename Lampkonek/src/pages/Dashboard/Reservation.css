@@ -156,13 +156,44 @@
     color: #374151;
     cursor: pointer;
     border-radius: 8px;
+    transition: all 0.2s;
 }
 
-.c-date:hover:not(.active) {
+.c-date.empty {
+    cursor: default;
+    pointer-events: none;
+}
+
+.c-date:hover:not(.active):not(.empty) {
     background-color: #f3f4f6;
 }
 
 .c-date.active {
+    background-color: #6366f1;
+    color: white;
+    font-weight: 600;
+}
+
+.c-date.today {
+    font-weight: 700;
+    color: #6366f1;
+}
+
+.c-date.today.active {
+    color: white;
+}
+
+.c-date.has-event {
+    background-color: #e0e7ff;
+    color: #4338ca;
+    font-weight: 600;
+}
+
+.c-date.has-event:hover:not(.active) {
+    background-color: #c7d2fe;
+}
+
+.c-date.has-event.active {
     background-color: #6366f1;
     color: white;
 }
@@ -278,6 +309,16 @@
 .badge-pending {
     background-color: #ffedd5;
     color: #9a3412;
+}
+
+.badge-rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.icon-red {
+    background-color: #fee2e2;
+    color: #ef4444;
 }
 
 @media (max-width: 1024px) {

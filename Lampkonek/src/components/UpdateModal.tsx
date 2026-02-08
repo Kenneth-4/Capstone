@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.0.2</span>
+                            <span className="version-number">v1.1.0</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,24 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 8, 2026</span>
+                                <h4 className="update-title">Reservation System Complete 📅</h4>
+                                <p>Full-featured reservation management system with calendar and approval workflow.</p>
+                                <ul className="feature-list">
+                                    <li>📝 <strong>Create Reservations:</strong> Submit facility reservation requests with detailed information.</li>
+                                    <li>📅 <strong>Interactive Calendar:</strong> Navigate months and see highlighted dates with reservations.</li>
+                                    <li>👁️ <strong>View Details:</strong> Click any reservation to see complete information in a modal.</li>
+                                    <li>✅ <strong>Approve/Reject:</strong> Administrators can approve or reject pending reservations.</li>
+                                    <li>🔍 <strong>Search & Filter:</strong> Find reservations by title, ID, or venue.</li>
+                                    <li>📊 <strong>Real-time Stats:</strong> Dashboard shows total, approved, pending, and rejected counts.</li>
+                                    <li>🏷️ <strong>Equipment Tracking:</strong> Request specific equipment and setup requirements.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 8, 2026</span>
                                 <h4 className="update-title">Member Editing & Data Integration ✏️</h4>
