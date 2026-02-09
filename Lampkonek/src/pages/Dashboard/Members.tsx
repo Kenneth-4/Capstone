@@ -125,7 +125,7 @@ export const Members = () => {
             <header className="top-bar">
                 <div className="page-title">
                     <h1>Members</h1>
-                    <p>Manage and track your ministry members</p>
+
                 </div>
 
                 <div className="top-actions">

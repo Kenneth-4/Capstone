@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.0.5</span>
+                            <span className="version-number">v1.0.6</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,22 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 9, 2026</span>
+                                <h4 className="update-title">Advanced Settings & Data Management ⚙️</h4>
+                                <p>Major upgrade to the Settings module, giving you full control over your church's structure and data safety.</p>
+                                <ul className="feature-list">
+                                    <li>🏘️ <strong>Dynamic Clusters:</strong> Create, edit, and delete Cluster groups. Auto-detects clusters from member profiles!</li>
+                                    <li>🙏 <strong>Ministry Management:</strong> Full control over Ministries with dynamic member counting and leader assignment.</li>
+                                    <li>💾 <strong>Backup & Restore:</strong> Protect your data! Download full database backups and restore them with a single click.</li>
+                                    <li>🔗 <strong>Integrated Forms:</strong> "Add Member" forms now dynamically pull options from your defined Clusters and Ministries.</li>
+                                    <li>🗑️ <strong>Safe Deletion:</strong> Unified confirmation dialogues to prevent accidental data loss.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 8, 2026</span>
                                 <h4 className="update-title">Reports & Analytics Complete 📊</h4>

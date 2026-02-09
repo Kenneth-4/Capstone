@@ -33,3 +33,4 @@ dist-ssr
 .supabase_admin_insert_policy.sql
 .supabase_reservations_setup.sql
 .supabase_add_profile_fields.sql
+.env*.local

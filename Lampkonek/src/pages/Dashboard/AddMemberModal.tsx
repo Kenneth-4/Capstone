@@ -38,6 +38,8 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
     const [generatedPassword, setGeneratedPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [clusterOptions, setClusterOptions] = useState<string[]>([]);
+    const [ministryOptions, setMinistryOptions] = useState<string[]>([]);
 
     const handleCopyPassword = () => {
         navigator.clipboard.writeText(generatedPassword);
@@ -83,7 +85,39 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
             setGeneratedPassword(''); // Clear password
         }
         setShowPassword(false); // Reset password visibility
+        fetchOptions();
     }, [member, isOpen]);
+
+    const fetchOptions = async () => {
+        try {
+            // Fetch Clusters
+            const { data: clusters } = await supabase
+                .from('clusters')
+                .select('name')
+                .order('name');
+
+            if (clusters && clusters.length > 0) {
+                setClusterOptions(clusters.map(c => c.name));
+            } else {
+                setClusterOptions(['Cluster A', 'Cluster B', 'Cluster C', 'Cluster D', 'Unassigned']);
+            }
+
+            // Fetch Ministries
+            const { data: ministries } = await supabase
+                .from('ministries')
+                .select('name')
+                .order('name');
+
+            if (ministries && ministries.length > 0) {
+                setMinistryOptions(ministries.map(m => m.name));
+            } else {
+                setMinistryOptions(['Worship Team', 'Kids Ministry', 'Ushering', 'Multimedia', 'None']);
+            }
+
+        } catch (error) {
+            console.error('Error fetching options:', error);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -112,7 +146,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
 
             if (member?.id) {
                 // Update existing member
-                const { error } = await supabase
+                const { error: updateError } = await supabase
                     .from('profiles')
                     .update({
                         full_name: fullName,
@@ -123,7 +157,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
                     })
                     .eq('id', member.id);
 
-                if (error) throw error;
+                if (updateError) throw updateError;
 
                 toast.success('Member updated successfully!');
             } else {
@@ -375,11 +409,9 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
                                     onChange={(e) => setFormData({ ...formData, cluster: e.target.value })}
                                 >
                                     <option value="" disabled>Select Cluster</option>
-                                    <option value="A">Cluster A</option>
-                                    <option value="B">Cluster B</option>
-                                    <option value="C">Cluster C</option>
-                                    <option value="D">Cluster D</option>
-                                    <option value="Unassigned">Unassigned</option>
+                                    {clusterOptions.map((opt, idx) => (
+                                        <option key={idx} value={opt}>{opt}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="form-group">
@@ -417,13 +449,17 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
                             </div>
                             <div className="form-group">
                                 <label>Ministry</label>
-                                <input
-                                    type="text"
+                                <select
                                     className="form-input"
-                                    placeholder="e.g. Worship Team"
                                     value={formData.ministry}
                                     onChange={(e) => setFormData({ ...formData, ministry: e.target.value })}
-                                />
+                                >
+                                    <option value="" disabled>Select Ministry</option>
+                                    <option value="None">None</option>
+                                    {ministryOptions.map((opt, idx) => (
+                                        <option key={idx} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 

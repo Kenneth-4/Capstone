@@ -64,6 +64,7 @@ export const Dashboard = () => {
         attendanceThisWeek: 0
     });
     const [isLoadingStats, setIsLoadingStats] = useState(true);
+    const [latestAnnouncement, setLatestAnnouncement] = useState<{ title: string } | null>(null);
 
     // Chart data state
     const [attendanceData, setAttendanceData] = useState<AttendanceChartData[]>([]);
@@ -142,8 +143,27 @@ export const Dashboard = () => {
             }
         };
 
+        const fetchLatestAnnouncement = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('announcements')
+                    .select('title')
+                    .eq('status', 'Active')
+                    .order('date', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (!error && data) {
+                    setLatestAnnouncement(data);
+                }
+            } catch (error) {
+                console.error('Error fetching announcement:', error);
+            }
+        };
+
         if (activeTab === 'Dashboard' || activeTab === '') {
             fetchDashboardStats();
+            fetchLatestAnnouncement();
         }
     }, [activeTab]);
 
@@ -387,7 +407,7 @@ export const Dashboard = () => {
                         <header className="top-bar">
                             <div className="page-title">
                                 <h1>Dashboard</h1>
-                                <p>Welcome back, Ministry Leader</p>
+
                             </div>
 
                             <div className="top-actions">
@@ -400,7 +420,7 @@ export const Dashboard = () => {
                         </header>
 
                         {/* Announcement Banner */}
-                        {showAnnouncement && (
+                        {showAnnouncement && latestAnnouncement && (
                             <div className="announcement-banner">
                                 <div className="announcement-content">
                                     <div className="announcement-icon">
@@ -408,7 +428,7 @@ export const Dashboard = () => {
                                     </div>
                                     <div className="announcement-text">
                                         <span className="announcement-title">New Announcement:</span>
-                                        <span>Upcoming Ministry Leaders Meeting scheduled for this Friday at 5:00 PM.</span>
+                                        <span>{latestAnnouncement?.title || 'No new announcements.'}</span>
                                     </div>
                                 </div>
                                 <button className="announcement-close" onClick={() => setShowAnnouncement(false)}>
