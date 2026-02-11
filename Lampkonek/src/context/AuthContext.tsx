@@ -26,11 +26,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (error) {
                 console.error('Error fetching profile:', error);
+                setProfile(null);
             } else {
                 setProfile(data);
             }
         } catch (error) {
             console.error('Unexpected error fetching profile:', error);
+            setProfile(null);
+        } finally {
+            // Always set loading to false when done
+            setLoading(false);
         }
     };
 

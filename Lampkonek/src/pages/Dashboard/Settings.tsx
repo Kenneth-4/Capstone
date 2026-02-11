@@ -139,7 +139,7 @@ export const Settings = () => {
 
     const fetchRoles = async () => {
         try {
-            // 1. Fetch defined roles from 'roles' table
+            // 1. Fetch defined roles from 'roles' table (has ID for signup)
             const { data: definedRoles } = await supabase
                 .from('roles')
                 .select('*')
@@ -162,39 +162,31 @@ export const Settings = () => {
             let finalRoles: GroupStats[] = [];
 
             if (definedRoles && definedRoles.length > 0) {
-                // Map defined roles first
+                // Map defined roles with their usage counts (include ID)
                 finalRoles = definedRoles.map((r: any) => ({
-                    id: r.id,
+                    id: r.id, // Include ID for editing/deleting
                     name: r.name,
                     count: counts[r.name] || 0,
-                    description: r.description,
-                    permissions: r.permissions
+                    description: r.description
                 }));
-
-                // Add any roles found in profiles but not in defined list
-                const definedNames = new Set(definedRoles.map((r: any) => r.name));
-                Object.keys(counts).forEach(key => {
-                    if (!definedNames.has(key) && key !== 'Unassigned') {
-                        finalRoles.push({
-                            name: key,
-                            count: counts[key],
-                            description: 'Legacy / Undefined Role'
-                        });
-                    }
-                });
 
                 // Add Unassigned if exists
                 if (counts['Unassigned']) {
-                    finalRoles.push({ name: 'Unassigned', count: counts['Unassigned'], description: 'Users without a role' });
+                    finalRoles.push({
+                        name: 'Unassigned',
+                        count: counts['Unassigned'],
+                        description: 'Users without a role'
+                    });
                 }
-
             } else {
-                // Fallback: just use aggregated counts if 'roles' table is empty/missing
-                finalRoles = Object.entries(counts).map(([name, count]) => ({
-                    name,
-                    count,
-                    description: 'Auto-detected role'
-                }));
+                // If no roles defined, just show unassigned
+                if (counts['Unassigned']) {
+                    finalRoles.push({
+                        name: 'Unassigned',
+                        count: counts['Unassigned'],
+                        description: 'Users without a role'
+                    });
+                }
             }
 
             setRolesList(finalRoles);
@@ -413,31 +405,26 @@ export const Settings = () => {
         try {
             setLoading(true);
 
-            if (selectedCluster && selectedCluster.id > 0) {
-                const { error } = await supabase
-                    .from('clusters')
-                    .update({
-                        name: data.name,
-                        leader: data.leader,
-                        description: data.description,
-                        schedule: data.schedule
-                    })
-                    .eq('id', selectedCluster.id);
+            // Use upsert since name is the primary key
+            const { error } = await supabase
+                .from('clusters')
+                .upsert({
+                    name: data.name,
+                    leader: data.leader,
+                    description: data.description,
+                    schedule: data.schedule
+                }, {
+                    onConflict: 'name'
+                });
 
-                if (error) throw error;
+            if (error) throw error;
+
+            // Show appropriate message
+            if (selectedCluster?.name && selectedCluster.name !== data.name) {
+                toast.success('Cluster created!');
+            } else if (selectedCluster?.name) {
                 toast.success('Cluster updated!');
             } else {
-                // Create new, or "promote" auto-detected cluster
-                const { error } = await supabase
-                    .from('clusters')
-                    .insert([{
-                        name: data.name,
-                        leader: data.leader,
-                        description: data.description,
-                        schedule: data.schedule
-                    }]);
-
-                if (error) throw error;
                 toast.success('Cluster created!');
             }
 
@@ -472,30 +459,26 @@ export const Settings = () => {
         try {
             setLoading(true);
 
-            if (selectedMinistry && selectedMinistry.id > 0) {
-                const { error } = await supabase
-                    .from('ministries')
-                    .update({
-                        name: data.name,
-                        leader: data.leader,
-                        description: data.description,
-                        schedule: data.schedule
-                    })
-                    .eq('id', selectedMinistry.id);
+            // Use upsert since name is the primary key
+            const { error } = await supabase
+                .from('ministries')
+                .upsert({
+                    name: data.name,
+                    leader: data.leader,
+                    description: data.description,
+                    schedule: data.schedule
+                }, {
+                    onConflict: 'name'
+                });
 
-                if (error) throw error;
+            if (error) throw error;
+
+            // Show appropriate message
+            if (selectedMinistry?.name && selectedMinistry.name !== data.name) {
+                toast.success('Ministry created!');
+            } else if (selectedMinistry?.name) {
                 toast.success('Ministry updated!');
             } else {
-                const { error } = await supabase
-                    .from('ministries')
-                    .insert([{
-                        name: data.name,
-                        leader: data.leader,
-                        description: data.description,
-                        schedule: data.schedule
-                    }]);
-
-                if (error) throw error;
                 toast.success('Ministry created!');
             }
 
@@ -632,36 +615,39 @@ export const Settings = () => {
     const handleSaveRole = async (roleData: { name: string; description: string; permissions: string[] }) => {
         try {
             if (selectedRole?.id) {
-                // Update existing role
+                // Update existing role (has an ID)
                 const { error } = await supabase
                     .from('roles')
                     .update({
                         name: roleData.name,
-                        description: roleData.description,
-                        permissions: roleData.permissions
+                        description: roleData.description
                     })
                     .eq('id', selectedRole.id);
 
                 if (error) throw error;
                 toast.success('Role updated successfully');
             } else {
-                // Create new role
+                // Creating a new role
                 const { error } = await supabase
                     .from('roles')
                     .insert([{
                         name: roleData.name,
-                        description: roleData.description,
-                        permissions: roleData.permissions
+                        description: roleData.description
                     }]);
 
                 if (error) throw error;
                 toast.success('Role created successfully');
             }
 
+            // Close modal and reset state after successful save
+            setIsRoleModalOpen(false);
+            setSelectedRole(null);
             fetchRoles(); // Refresh list
         } catch (error: any) {
             console.error('Error saving role:', error);
             toast.error('Failed to save role');
+            // Re-throw to let the modal handle the error state
+            throw error;
         }
     };
 
@@ -671,8 +657,8 @@ export const Settings = () => {
     };
 
     const handleDeleteRole = (role: GroupStats | Cluster | Ministry) => {
-        if (!('permissions' in role)) return; // Type guard, though effectively handled by UI context
-        if (!role.id) return toast.error('This auto-detected role cannot be deleted.');
+        if (!('permissions' in role)) return; // Type guard
+        if (!role.id) return toast.error('This role cannot be deleted.');
         setItemToDelete(role);
         setDeleteType('role');
         setIsDeleteModalOpen(true);
@@ -687,7 +673,7 @@ export const Settings = () => {
                 const { error } = await supabase
                     .from('roles')
                     .delete()
-                    .eq('id', itemToDelete.id);
+                    .eq('id', itemToDelete.id); // Roles use ID
 
                 if (error) throw error;
                 toast.success('Role deleted successfully');
@@ -706,7 +692,7 @@ export const Settings = () => {
                 const { error } = await supabase
                     .from('clusters')
                     .delete()
-                    .eq('id', itemToDelete.id);
+                    .eq('name', itemToDelete.name); // Clusters use name as primary key
 
                 if (error) throw error;
                 toast.success('Cluster deleted');
@@ -716,7 +702,7 @@ export const Settings = () => {
                 const { error } = await supabase
                     .from('ministries')
                     .delete()
-                    .eq('id', itemToDelete.id);
+                    .eq('name', itemToDelete.name); // Ministries use name as primary key
 
                 if (error) throw error;
                 toast.success('Ministry deleted');
@@ -834,7 +820,10 @@ export const Settings = () => {
 
                         <AddRoleModal
                             isOpen={isRoleModalOpen}
-                            onClose={() => setIsRoleModalOpen(false)}
+                            onClose={() => {
+                                setIsRoleModalOpen(false);
+                                setSelectedRole(null);
+                            }}
                             onSave={handleSaveRole}
                             initialData={selectedRole ? {
                                 name: selectedRole.name,

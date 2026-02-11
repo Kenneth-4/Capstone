@@ -20,7 +20,7 @@ import './Attendance.css';
 
 interface AttendanceRecord {
     id: string; // or number depending on DB
-    member_id: string;
+    user_id: string;
     date: string;
     event: string;
     status: string;
@@ -93,12 +93,12 @@ export const Attendance = () => {
             setLoading(true);
 
             // Build query
-            // Attempt standard join. If your FK is named differently, this might need adjustment.
+            // Join with profiles using user_id foreign key
             let query = supabase
                 .from('attendance')
                 .select(`
                     *,
-                    profiles:member_id (*)
+                    profiles:user_id (*)
                 `)
                 .order('date', { ascending: false });
 

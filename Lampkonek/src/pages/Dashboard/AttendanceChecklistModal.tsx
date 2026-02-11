@@ -103,7 +103,7 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
 
                 if (!attendanceError && attendanceData) {
                     attendanceData.forEach((record: any) => {
-                        attendanceMap.set(record.member_id, record);
+                        attendanceMap.set(record.user_id, record);
                     });
                 }
             }
@@ -184,7 +184,7 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
                 if (!emp.isPresent && !emp.isAbsent) return null;
 
                 return {
-                    member_id: emp.id,
+                    user_id: emp.id,
                     date: selectedDate,
                     event: selectedEvent,
                     status: status,
@@ -200,7 +200,7 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
 
             const { error } = await supabase
                 .from('attendance')
-                .upsert(records, { onConflict: 'member_id, date, event' }); // Hope this constraint exists or Supabase handles it if we specify columns
+                .upsert(records, { onConflict: 'user_id,date' }); // Upsert based on user_id and date
 
             if (error) throw error;
 

@@ -101,13 +101,11 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
             const { error } = await supabase
                 .from('attendance')
                 .insert({
-                    member_id: memberId,
+                    user_id: memberId,
                     date: date,
                     event: selectedEvent,
                     status: status,
-                    remarks: mode // Storing mode in remarks or separate column if exists. Let's use remarks for now or just ignore mode if not requested.
-                    // Actually, let's append mode to remarks if meaningful.
-                    // Or if schema has 'remarks', maybe just put "Mode: Onsite" there.
+                    remarks: mode // Storing mode in remarks
                 });
 
             if (error) throw error;

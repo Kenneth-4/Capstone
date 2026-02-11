@@ -16,13 +16,13 @@ import { UserProfile } from '../../components/UserProfile';
 import { useAuth } from '../../context/AuthContext';
 
 // Map of roles to allowed tabs
-// Keys must match the values stored in the database profiles table
+// Keys use lowercase for case-insensitive matching
 const ROLE_ACCESS: Record<string, string[]> = {
-    administrator: ['Dashboard', 'Attendance', 'Members', 'Reservation', 'Reports', 'Settings', 'My Profile'],
-    ministry_leader: ['Attendance', 'Members', 'Reports', 'My Profile'],
-    logistics: ['Reservation'], // "Reservation module only" per request
-    member: ['My Profile', 'Attendance'],
-    volunteer: ['My Profile', 'Attendance']
+    'administrator': ['Dashboard', 'Attendance', 'Members', 'Reservation', 'Reports', 'Settings', 'My Profile'],
+    'ministry leader': ['Attendance', 'Members', 'Reports', 'My Profile'],
+    'logistics': ['Reservation', 'My Profile'],
+    'member': ['My Profile', 'Attendance'],
+    'volunteer': ['My Profile', 'Attendance']
 };
 
 
@@ -87,11 +87,10 @@ export const Dashboard = () => {
                     .from('profiles')
                     .select('*', { count: 'exact', head: true });
 
-                // Fetch active members
+                // Fetch total members (all members are considered active)
                 const { count: activeMembers } = await supabase
                     .from('profiles')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('status', 'Active');
+                    .select('*', { count: 'exact', head: true });
 
                 // Fetch new members this month
                 const startOfMonth = new Date();
@@ -150,11 +149,10 @@ export const Dashboard = () => {
                     .select('title')
                     .eq('status', 'Active')
                     .order('date', { ascending: false })
-                    .limit(1)
-                    .single();
+                    .limit(1);
 
-                if (!error && data) {
-                    setLatestAnnouncement(data);
+                if (!error && data && data.length > 0) {
+                    setLatestAnnouncement(data[0]);
                 }
             } catch (error) {
                 console.error('Error fetching announcement:', error);
@@ -173,34 +171,28 @@ export const Dashboard = () => {
             try {
                 setIsLoadingCharts(true);
 
-                // Fetch member status distribution
-                const { data: profiles, error: profilesError } = await supabase
+                // Since we don't track member status, just show total members by cluster
+                const { data: profilesByCluster, error: clusterError } = await supabase
                     .from('profiles')
-                    .select('status');
+                    .select('cluster');
 
-                if (profilesError) throw profilesError;
+                if (clusterError) throw clusterError;
 
-                // Count members by status
-                const statusCounts = {
-                    Active: 0,
-                    Inactive: 0,
-                    Transferred: 0,
-                    Visitor: 0
-                };
-
-                profiles?.forEach((profile: any) => {
-                    const status = profile.status || 'Inactive';
-                    if (status in statusCounts) {
-                        statusCounts[status as keyof typeof statusCounts]++;
-                    }
+                // Count members by cluster
+                const clusterCounts: Record<string, number> = {};
+                profilesByCluster?.forEach((profile: any) => {
+                    const cluster = profile.cluster || 'Unassigned';
+                    clusterCounts[cluster] = (clusterCounts[cluster] || 0) + 1;
                 });
 
-                setMemberStatusData([
-                    { name: 'Active', value: statusCounts.Active, color: '#10b981' },
-                    { name: 'Inactive', value: statusCounts.Inactive, color: '#f43f5e' },
-                    { name: 'Transferred', value: statusCounts.Transferred, color: '#9ca3af' },
-                    { name: 'Visitor', value: statusCounts.Visitor, color: '#f59e0b' },
-                ]);
+                // Convert to chart data format
+                const clusterData = Object.entries(clusterCounts).map(([name, count]) => ({
+                    name,
+                    value: count,
+                    color: name === 'Unassigned' ? '#9ca3af' : '#6366f1'
+                }));
+
+                setMemberStatusData(clusterData);
 
                 // Fetch attendance trends for last 6 months
                 const monthsData: AttendanceChartData[] = [];
@@ -261,7 +253,9 @@ export const Dashboard = () => {
     const getRoleTabs = () => {
         if (!profile) return [];
         const role = profile.role || 'member';
-        return ROLE_ACCESS[role] || [];
+        // Normalize role to lowercase for case-insensitive matching
+        const normalizedRole = role.toLowerCase();
+        return ROLE_ACCESS[normalizedRole] || ROLE_ACCESS['member'] || [];
     };
 
     const allowedTabs = getRoleTabs();

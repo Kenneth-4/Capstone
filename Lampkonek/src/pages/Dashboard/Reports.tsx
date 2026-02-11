@@ -165,7 +165,7 @@ export const Reports = () => {
             // Get attendance by cluster using date filter
             const { data: attendanceByCluster } = await supabase
                 .from('attendance')
-                .select('member_id, status')
+                .select('user_id, status')
                 .gte('date', filterStartDate)
                 .eq('status', 'Present');
 
@@ -180,11 +180,11 @@ export const Reports = () => {
             // Count unique members per cluster who attended
             const attendedByCluster: Record<string, Set<string>> = {};
             attendanceByCluster?.forEach((record: any) => {
-                const cluster = memberClusterMap[record.member_id] || 'Unassigned';
+                const cluster = memberClusterMap[record.user_id] || 'Unassigned';
                 if (!attendedByCluster[cluster]) {
                     attendedByCluster[cluster] = new Set();
                 }
-                attendedByCluster[cluster].add(record.member_id);
+                attendedByCluster[cluster].add(record.user_id);
             });
 
             // Update cluster counts with actual attendance
@@ -204,31 +204,31 @@ export const Reports = () => {
             // Fetch detailed attendance logs with date filter
             const { data: attendanceLogs } = await supabase
                 .from('attendance')
-                .select('date, event_name, status')
+                .select('date, status')
                 .gte('date', filterStartDate)
                 .order('date', { ascending: false })
                 .limit(50);
 
-            // Group by date and event
-            const logsByEvent: Record<string, { date: string; event: string; present: number; absent: number; visitor: number }> = {};
+            // Group by date (no event_name in schema)
+            const logsByDate: Record<string, { date: string; event: string; present: number; absent: number; visitor: number }> = {};
 
             attendanceLogs?.forEach((log: any) => {
-                const key = `${log.date}-${log.event_name || 'Service'}`;
-                if (!logsByEvent[key]) {
-                    logsByEvent[key] = {
+                const key = log.date;
+                if (!logsByDate[key]) {
+                    logsByDate[key] = {
                         date: log.date,
-                        event: log.event_name || 'Service',
+                        event: 'Service', // Default event name since it's not in schema
                         present: 0,
                         absent: 0,
                         visitor: 0
                     };
                 }
-                if (log.status === 'Present') logsByEvent[key].present++;
-                else if (log.status === 'Absent') logsByEvent[key].absent++;
-                else if (log.status === 'Visitor') logsByEvent[key].visitor++;
+                if (log.status === 'Present') logsByDate[key].present++;
+                else if (log.status === 'Absent') logsByDate[key].absent++;
+                else if (log.status === 'Visitor') logsByDate[key].visitor++;
             });
 
-            const logsArray: AttendanceLog[] = Object.values(logsByEvent).map(log => {
+            const logsArray: AttendanceLog[] = Object.values(logsByDate).map(log => {
                 const total = log.present + log.absent + log.visitor;
                 const rate = total > 0 ? Math.round((log.present / total) * 100) : 0;
                 return {

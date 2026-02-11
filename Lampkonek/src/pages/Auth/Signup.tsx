@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
@@ -20,6 +20,31 @@ export const Signup = () => {
     });
 
     const [loading, setLoading] = useState(false);
+    const [roles, setRoles] = useState<{ id: number; name: string }[]>([]);
+
+    // Fetch available roles from the database
+    useEffect(() => {
+        const fetchRoles = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('roles')
+                    .select('id, name')
+                    .order('name');
+
+                if (error) throw error;
+                setRoles(data || []);
+            } catch (error) {
+                console.error('Error fetching roles:', error);
+                // Fallback to default roles if fetch fails
+                setRoles([
+                    { id: 1, name: 'Member' },
+                    { id: 2, name: 'Volunteer' }
+                ]);
+            }
+        };
+
+        fetchRoles();
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({
@@ -170,11 +195,11 @@ export const Signup = () => {
                                 onChange={handleChange}
                             >
                                 <option value="" disabled>Select your role</option>
-                                <option value="member">Member</option>
-                                <option value="logistics">Logistics</option>
-                                <option value="volunteer">Volunteer</option>
-                                <option value="ministry_leader">Ministry Leader</option>
-                                <option value="administrator">Administrator</option>
+                                {roles.map((role) => (
+                                    <option key={role.id} value={role.name}>
+                                        {role.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
