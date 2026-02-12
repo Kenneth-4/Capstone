@@ -76,8 +76,8 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
                 email: '',
                 birthDate: '',
                 gender: '',
-                country: '',
-                cluster: '',
+                country: '', // Country
+                cluster: 'Unassigned',
                 status: '',
                 joinDate: '',
                 ministry: ''
@@ -94,12 +94,13 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
             const { data: clusters } = await supabase
                 .from('clusters')
                 .select('name')
+                .neq('name', 'Unassigned') // Ensure Unassigned is not fetched
                 .order('name');
 
-            if (clusters && clusters.length > 0) {
+            if (clusters) {
                 setClusterOptions(clusters.map(c => c.name));
             } else {
-                setClusterOptions(['Cluster A', 'Cluster B', 'Cluster C', 'Cluster D', 'Unassigned']);
+                setClusterOptions([]);
             }
 
             // Fetch Ministries
@@ -409,6 +410,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
                                     onChange={(e) => setFormData({ ...formData, cluster: e.target.value })}
                                 >
                                     <option value="" disabled>Select Cluster</option>
+                                    <option value="Unassigned">Unassigned</option>
                                     {clusterOptions.map((opt, idx) => (
                                         <option key={idx} value={opt}>{opt}</option>
                                     ))}

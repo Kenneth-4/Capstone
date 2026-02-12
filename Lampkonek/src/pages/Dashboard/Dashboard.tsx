@@ -171,28 +171,44 @@ export const Dashboard = () => {
             try {
                 setIsLoadingCharts(true);
 
-                // Since we don't track member status, just show total members by cluster
-                const { data: profilesByCluster, error: clusterError } = await supabase
+                // Fetch member status
+                const { data: profiles, error: statusError } = await supabase
                     .from('profiles')
-                    .select('cluster');
+                    .select('status');
 
-                if (clusterError) throw clusterError;
+                if (statusError) throw statusError;
 
-                // Count members by cluster
-                const clusterCounts: Record<string, number> = {};
-                profilesByCluster?.forEach((profile: any) => {
-                    const cluster = profile.cluster || 'Unassigned';
-                    clusterCounts[cluster] = (clusterCounts[cluster] || 0) + 1;
+                // Count members by status
+                const statusCounts: Record<string, number> = {
+                    'Active': 0,
+                    'Inactive': 0,
+                    'Transferred': 0,
+                    'Visitor': 0
+                };
+
+                profiles?.forEach((profile: any) => {
+                    // Default to 'Active' as per recent migration update, or 'Inactive' if preferred.
+                    // Let's default to 'Active' to fix the user's issue with seeing 'Inactive'.
+                    const status = profile.status || 'Active';
+                    statusCounts[status] = (statusCounts[status] || 0) + 1;
                 });
 
+                // Define colors for known statuses
+                const statusColors: Record<string, string> = {
+                    'Active': '#10b981',
+                    'Inactive': '#f43f5e',
+                    'Transferred': '#9ca3af',
+                    'Visitor': '#f59e0b'
+                };
+
                 // Convert to chart data format
-                const clusterData = Object.entries(clusterCounts).map(([name, count]) => ({
+                const statusData = Object.entries(statusCounts).map(([name, count]) => ({
                     name,
                     value: count,
-                    color: name === 'Unassigned' ? '#9ca3af' : '#6366f1'
+                    color: statusColors[name] || '#6366f1' // Fallback color
                 }));
 
-                setMemberStatusData(clusterData);
+                setMemberStatusData(statusData);
 
                 // Fetch attendance trends for last 6 months
                 const monthsData: AttendanceChartData[] = [];

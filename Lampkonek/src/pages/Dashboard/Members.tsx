@@ -6,6 +6,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Moon,
+    Plus, // Added Plus import
 } from 'lucide-react';
 import './Members.css';
 import { AddMemberModal } from './AddMemberModal';
@@ -171,12 +172,7 @@ export const Members = () => {
                             <Filter size={18} />
                         </button>
                     </div>
-                    {/*
-                    <button className="add-member-btn" onClick={handleAddMember}>
-                        <Plus size={18} />
-                        ADD NEW MEMBER
-                    </button>
-                    */}
+
                 </div>
 
                 {/* Table */}

@@ -5,7 +5,6 @@ import {
     MapPin,
     Calendar,
     Edit2,
-
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -19,7 +18,7 @@ export const MyProfile = () => {
     const [formData, setFormData] = useState({
         full_name: '',
         phone: '',
-        birth_date: '',
+        birthday: '',
         cluster: ''
     });
 
@@ -30,17 +29,31 @@ export const MyProfile = () => {
         confirmPassword: ''
     });
 
+    const [clusters, setClusters] = useState<string[]>([]);
     const [isUpdating, setIsUpdating] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-    // Initialize form data when profile loads
+    // Initialize form data and fetch clusters when profile loads
     useEffect(() => {
+        const fetchClusters = async () => {
+            const { data } = await supabase
+                .from('clusters')
+                .select('name')
+                .order('name');
+
+            if (data) {
+                setClusters(data.map(c => c.name));
+            }
+        };
+
+        fetchClusters();
+
         if (profile) {
             setFormData({
                 full_name: profile.full_name || '',
                 phone: profile.phone || '',
-                birth_date: profile.birth_date || '',
-                cluster: profile.cluster || 'Cluster A'
+                birthday: profile.birthday || '',
+                cluster: profile.cluster || ''
             });
         }
     }, [profile]);
@@ -90,7 +103,7 @@ export const MyProfile = () => {
                 .update({
                     full_name: formData.full_name.trim(),
                     phone: formData.phone || null,
-                    birth_date: formData.birth_date || null,
+                    birthday: formData.birthday || null,
                     cluster: formData.cluster || null
                 })
                 .eq('id', user.id);
@@ -262,8 +275,8 @@ export const MyProfile = () => {
                                 <input
                                     type="date"
                                     className="form-input"
-                                    name="birth_date"
-                                    value={formData.birth_date}
+                                    name="birthday"
+                                    value={formData.birthday}
                                     onChange={handleInputChange}
                                 />
                             </div>
@@ -278,9 +291,11 @@ export const MyProfile = () => {
                                     value={formData.cluster}
                                     onChange={handleInputChange}
                                 >
-                                    <option value="Cluster A">Cluster A</option>
-                                    <option value="Cluster B">Cluster B</option>
-                                    <option value="Cluster C">Cluster C</option>
+                                    <option value="" disabled>Select Cluster</option>
+                                    <option value="Unassigned">Unassigned</option>
+                                    {clusters.map((c, idx) => (
+                                        <option key={idx} value={c}>{c}</option>
+                                    ))}
                                 </select>
                                 <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', pointerEvents: 'none' }}>▼</div>
                             </div>

@@ -13,7 +13,8 @@ import {
     Plus,
     Edit2,
     Trash2,
-    AlertTriangle
+    AlertTriangle,
+    ChevronRight, // Added ChevronRight import
 } from 'lucide-react';
 import './Settings.css';
 import { AddRoleModal } from './AddRoleModal';
@@ -100,6 +101,9 @@ export const Settings = () => {
     const [selectedMinistry, setSelectedMinistry] = useState<Ministry | null>(null);
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
     const [selectedRole, setSelectedRole] = useState<GroupStats | null>(null);
+    const [tempPermissions, setTempPermissions] = useState<string[]>([]);
+
+    const APP_PAGES = ['Dashboard', 'Attendance', 'Members', 'Reports', 'Settings', 'Reservations', 'Profile'];
 
     // Delete Modal State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -167,7 +171,8 @@ export const Settings = () => {
                     id: r.id, // Include ID for editing/deleting
                     name: r.name,
                     count: counts[r.name] || 0,
-                    description: r.description
+                    description: r.description,
+                    permissions: r.permissions || []
                 }));
 
                 // Add Unassigned if exists
@@ -612,42 +617,30 @@ export const Settings = () => {
         setIsDeleteModalOpen(true);
     };
 
-    const handleSaveRole = async (roleData: { name: string; description: string; permissions: string[] }) => {
+    const handleUpdateRolePermissions = async () => {
+        if (!selectedRole?.id) return;
+
         try {
-            if (selectedRole?.id) {
-                // Update existing role (has an ID)
-                const { error } = await supabase
-                    .from('roles')
-                    .update({
-                        name: roleData.name,
-                        description: roleData.description
-                    })
-                    .eq('id', selectedRole.id);
+            setLoading(true);
+            const { error } = await supabase
+                .from('roles')
+                .update({
+                    permissions: tempPermissions
+                })
+                .eq('id', selectedRole.id);
 
-                if (error) throw error;
-                toast.success('Role updated successfully');
-            } else {
-                // Creating a new role
-                const { error } = await supabase
-                    .from('roles')
-                    .insert([{
-                        name: roleData.name,
-                        description: roleData.description
-                    }]);
+            if (error) throw error;
+            toast.success('Role permissions updated successfully');
 
-                if (error) throw error;
-                toast.success('Role created successfully');
-            }
-
-            // Close modal and reset state after successful save
-            setIsRoleModalOpen(false);
+            // Refresh and close
+            fetchRoles();
             setSelectedRole(null);
-            fetchRoles(); // Refresh list
+            setTempPermissions([]);
         } catch (error: any) {
-            console.error('Error saving role:', error);
-            toast.error('Failed to save role');
-            // Re-throw to let the modal handle the error state
-            throw error;
+            console.error('Error updating role:', error);
+            toast.error('Failed to update permissions');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -806,55 +799,89 @@ export const Settings = () => {
                     <div>
                         <div className="set-content-header">
                             User Roles & Permissions
-                            <button
-                                className="btn-primary"
-                                style={{ fontSize: '0.85rem' }}
-                                onClick={() => {
-                                    setSelectedRole(null);
-                                    setIsRoleModalOpen(true);
-                                }}
-                            >
-                                <Plus size={16} /> Add Role
-                            </button>
                         </div>
 
-                        <AddRoleModal
-                            isOpen={isRoleModalOpen}
-                            onClose={() => {
-                                setIsRoleModalOpen(false);
-                                setSelectedRole(null);
-                            }}
-                            onSave={handleSaveRole}
-                            initialData={selectedRole ? {
-                                name: selectedRole.name,
-                                description: selectedRole.description || '',
-                                permissions: selectedRole.permissions || []
-                            } : undefined}
-                        />
-
-                        {rolesList.length === 0 ? <p style={{ color: '#6b7280', padding: '1rem' }}>No roles data found.</p> : rolesList.map((role, idx) => (
-                            <div key={idx} className="role-card">
-                                <div className="role-info">
-                                    <h4>{role.name}</h4>
-                                    <span className="role-desc">{role.description || role.leader || 'No description'}</span>
-                                    <span className="role-users">{role.count} users with this role</span>
+                        {selectedRole ? (
+                            <div className="role-editor">
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1f2937', marginBottom: '0.5rem' }}>{selectedRole.name}</h3>
+                                    <p style={{ color: '#6b7280' }}>{selectedRole.description}</p>
                                 </div>
-                                <div className="role-actions">
+
+                                <div className="permissions-section">
+                                    <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>Allowed Access</h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+                                        {APP_PAGES.map(page => (
+                                            <label key={page} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={tempPermissions.includes(page)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setTempPermissions([...tempPermissions, page]);
+                                                        } else {
+                                                            setTempPermissions(tempPermissions.filter(p => p !== page));
+                                                        }
+                                                    }}
+                                                    style={{ width: '16px', height: '16px' }}
+                                                />
+                                                <span style={{ color: '#374151' }}>{page}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
                                     <button
-                                        className="icon-btn-gray"
-                                        onClick={() => handleEditRole(role)}
+                                        className="btn-primary"
+                                        onClick={handleUpdateRolePermissions}
+                                        disabled={loading}
                                     >
-                                        <Edit2 size={16} />
+                                        <Save size={16} /> Save Changes
                                     </button>
                                     <button
-                                        className="icon-btn-gray icon-btn-red"
-                                        onClick={() => handleDeleteRole(role)}
+                                        className="cancel-btn"
+                                        style={{ padding: '0.5rem 1rem', border: '1px solid #d1d5db', borderRadius: '0.375rem', background: 'white', cursor: 'pointer' }}
+                                        onClick={() => setSelectedRole(null)}
+                                        disabled={loading}
                                     >
-                                        <Trash2 size={16} />
+                                        Cancel
                                     </button>
                                 </div>
                             </div>
-                        ))}
+                        ) : (
+                            rolesList.length === 0 ? <p style={{ color: '#6b7280', padding: '1rem' }}>No roles data found.</p> : rolesList.map((role, idx) => (
+                                <div
+                                    key={idx}
+                                    className="role-card"
+                                    onClick={() => {
+                                        setSelectedRole(role);
+                                        setTempPermissions(role.permissions || []);
+                                    }}
+                                    style={{ cursor: 'pointer', transition: 'transform 0.1s' }}
+                                >
+                                    <div className="role-info">
+                                        <h4>{role.name}</h4>
+                                        <span className="role-desc">{role.description || role.leader || 'No description'}</span>
+                                        <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                            {(role.permissions || []).slice(0, 3).map((perm, i) => (
+                                                <span key={i} style={{ fontSize: '0.75rem', background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '4px' }}>
+                                                    {perm}
+                                                </span>
+                                            ))}
+                                            {(role.permissions?.length || 0) > 3 && (
+                                                <span style={{ fontSize: '0.75rem', background: '#f3f4f6', color: '#6b7280', padding: '2px 8px', borderRadius: '4px' }}>
+                                                    +{(role.permissions?.length || 0) - 3} more
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="role-actions">
+                                        <ChevronRight size={20} color="#9ca3af" />
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 );
             case 'Reservations':

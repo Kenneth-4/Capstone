@@ -112,7 +112,7 @@ export const MemberReport = () => {
             // Calculate pie chart data (status distribution)
             const statusCounts: Record<string, number> = {};
             profiles?.forEach(p => {
-                const status = p.status || 'Inactive';
+                const status = p.status || 'Active';
                 statusCounts[status] = (statusCounts[status] || 0) + 1;
             });
 
