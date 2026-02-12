@@ -647,7 +647,16 @@ export const Settings = () => {
         setLoading(true);
 
         try {
-            if (deleteType === 'announcement') {
+            if (deleteType === 'role') {
+                const { error } = await supabase
+                    .from('roles')
+                    .delete()
+                    .eq('id', itemToDelete.id); // Roles use ID
+
+                if (error) throw error;
+                toast.success('Role deleted successfully');
+                fetchRoles();
+            } else if (deleteType === 'announcement') {
                 const { error } = await supabase
                     .from('announcements')
                     .delete()
