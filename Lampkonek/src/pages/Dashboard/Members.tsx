@@ -6,7 +6,6 @@ import {
     ChevronLeft,
     ChevronRight,
     Moon,
-    Plus, // Added Plus import
 } from 'lucide-react';
 import './Members.css';
 import { AddMemberModal } from './AddMemberModal';

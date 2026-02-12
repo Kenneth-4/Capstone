@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.0.6</span>
+                            <span className="version-number">v1.0.7</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,21 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 12, 2026</span>
+                                <h4 className="update-title">Member Management & Permissions Overhaul 🛠️</h4>
+                                <p>We've restored member management and significantly enhanced security controls.</p>
+                                <ul className="feature-list">
+                                    <li>🔒 <strong>Granular Permissions:</strong> New "User Roles" editor allows precise control over which pages each role can access.</li>
+                                    <li>🔄 <strong>Dynamic Data Handling:</strong> Forms now intelligently fetch Clusters and Ministries from your settings, ensuring data consistency.</li>
+                                    <li>✨ <strong>Profile Enhancements:</strong> "My Profile" now supports dynamic cluster selection and proper birth date handling.</li>
+                                    <li>📊 <strong>Status Consistency:</strong> Fixed discrepancies between Dashboard charts and Member Reports.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 9, 2026</span>
                                 <h4 className="update-title">Advanced Settings & Data Management ⚙️</h4>

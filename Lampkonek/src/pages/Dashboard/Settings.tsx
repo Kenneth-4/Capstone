@@ -17,7 +17,6 @@ import {
     ChevronRight, // Added ChevronRight import
 } from 'lucide-react';
 import './Settings.css';
-import { AddRoleModal } from './AddRoleModal';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { AddAnnouncementModal } from './AddAnnouncementModal';
 import { AddClusterModal } from './AddClusterModal';
@@ -99,7 +98,6 @@ export const Settings = () => {
     const [selectedCluster, setSelectedCluster] = useState<Cluster | null>(null);
     const [isMinistryModalOpen, setIsMinistryModalOpen] = useState(false);
     const [selectedMinistry, setSelectedMinistry] = useState<Ministry | null>(null);
-    const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
     const [selectedRole, setSelectedRole] = useState<GroupStats | null>(null);
     const [tempPermissions, setTempPermissions] = useState<string[]>([]);
 
@@ -644,34 +642,12 @@ export const Settings = () => {
         }
     };
 
-    const handleEditRole = (role: GroupStats) => {
-        setSelectedRole(role);
-        setIsRoleModalOpen(true);
-    };
-
-    const handleDeleteRole = (role: GroupStats | Cluster | Ministry) => {
-        if (!('permissions' in role)) return; // Type guard
-        if (!role.id) return toast.error('This role cannot be deleted.');
-        setItemToDelete(role);
-        setDeleteType('role');
-        setIsDeleteModalOpen(true);
-    };
-
     const confirmDelete = async () => {
         if (!itemToDelete) return;
         setLoading(true);
 
         try {
-            if (deleteType === 'role') {
-                const { error } = await supabase
-                    .from('roles')
-                    .delete()
-                    .eq('id', itemToDelete.id); // Roles use ID
-
-                if (error) throw error;
-                toast.success('Role deleted successfully');
-                fetchRoles();
-            } else if (deleteType === 'announcement') {
+            if (deleteType === 'announcement') {
                 const { error } = await supabase
                     .from('announcements')
                     .delete()

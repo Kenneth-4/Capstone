@@ -5,7 +5,7 @@ export interface Profile {
     role: string;
     avatar_url?: string;
     phone?: string;
-    birth_date?: string;
+    birthday?: string;
     cluster?: string;
     created_at?: string;
 }
