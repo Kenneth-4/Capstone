@@ -15,16 +15,6 @@ import { MyProfile } from './MyProfile';
 import { UserProfile } from '../../components/UserProfile';
 import { useAuth } from '../../context/AuthContext';
 
-// Map of roles to allowed tabs
-// Keys use lowercase for case-insensitive matching
-const ROLE_ACCESS: Record<string, string[]> = {
-    'administrator': ['Dashboard', 'Attendance', 'Members', 'Reservation', 'Reports', 'Settings', 'My Profile'],
-    'ministry leader': ['Attendance', 'Members', 'Reports', 'My Profile'],
-    'logistics': ['Reservation', 'My Profile'],
-    'member': ['My Profile', 'Attendance'],
-    'volunteer': ['My Profile', 'Attendance']
-};
-
 
 interface DashboardStats {
     totalMembers: number;
@@ -55,6 +45,8 @@ export const Dashboard = () => {
     const [reportType, setReportType] = useState('Attendance'); // 'Attendance' | 'Members'
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showAnnouncement, setShowAnnouncement] = useState(true);
+    const [allowedTabs, setAllowedTabs] = useState<string[]>([]);
+    const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
     const [stats, setStats] = useState<DashboardStats>({
         totalMembers: 0,
         activeMembers: 0,
@@ -75,6 +67,55 @@ export const Dashboard = () => {
         { name: 'Visitor', value: 0, color: '#f59e0b' },
     ]);
     const [isLoadingCharts, setIsLoadingCharts] = useState(true);
+
+    // Fetch user's role permissions from database
+    useEffect(() => {
+        const fetchRolePermissions = async () => {
+            if (!profile) return;
+
+            try {
+                setIsLoadingPermissions(true);
+                const userRole = profile.role || 'Member';
+
+                // Fetch the role's permissions from the database
+                const { data: roleData, error } = await supabase
+                    .from('roles')
+                    .select('permissions')
+                    .eq('name', userRole)
+                    .single();
+
+                if (error) {
+                    console.error('Error fetching role permissions:', error);
+                    // Fallback to My Profile only if role not found
+                    setAllowedTabs(['My Profile']);
+                    return;
+                }
+
+                const permissions = roleData?.permissions || [];
+                console.log(`User role: ${userRole}, Permissions:`, permissions);
+
+                // Map page names to match navigation items
+                // Permissions are stored as page names like 'Dashboard', 'Members', etc.
+                const tabs = permissions.length > 0 ? permissions : ['My Profile'];
+
+                // Always ensure My Profile is accessible
+                if (!tabs.includes('My Profile')) {
+                    tabs.push('My Profile');
+                }
+
+                setAllowedTabs(tabs);
+            } catch (error) {
+                console.error('Error in fetchRolePermissions:', error);
+                setAllowedTabs(['My Profile']);
+            } finally {
+                setIsLoadingPermissions(false);
+            }
+        };
+
+        if (!loading && profile) {
+            fetchRolePermissions();
+        }
+    }, [profile, loading]);
 
     // Fetch dashboard statistics
     useEffect(() => {
@@ -265,31 +306,15 @@ export const Dashboard = () => {
         }
     }, [activeTab]);
 
-    // Filter allowed tabs based on role
-    const getRoleTabs = () => {
-        if (!profile) return [];
-        const role = profile.role || 'member';
-        // Normalize role to lowercase for case-insensitive matching
-        const normalizedRole = role.toLowerCase();
-        return ROLE_ACCESS[normalizedRole] || ROLE_ACCESS['member'] || [];
-    };
-
-    const allowedTabs = getRoleTabs();
-
+    // Set initial active tab when permissions are loaded
     useEffect(() => {
-        if (!loading && profile) {
+        if (!isLoadingPermissions && allowedTabs.length > 0) {
             // If currently active tab is not allowed (or empty), redirect to first allowed tab
             if (!activeTab || !allowedTabs.includes(activeTab)) {
-                if (allowedTabs.length > 0) {
-                    setActiveTab(allowedTabs[0]);
-                } else {
-                    // Fallback if no tabs allowed? Should shouldn't happen with valid roles.
-                    // Maybe just show 'My Profile' or nothing.
-                    setActiveTab('My Profile');
-                }
+                setActiveTab(allowedTabs[0]);
             }
         }
-    }, [loading, profile, allowedTabs, activeTab]);
+    }, [isLoadingPermissions, allowedTabs, activeTab]);
 
     const handleLogout = () => {
         setIsLoggingOut(true);

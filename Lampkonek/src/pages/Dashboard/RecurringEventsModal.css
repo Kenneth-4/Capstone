@@ -55,13 +55,19 @@
 
 .recurring-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 1rem;
     padding: 1rem;
     background-color: #f9fafb;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     /* transition: border-color 0.2s, background-color 0.2s; */
+}
+
+.recurring-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
 .recurring-item.active {
@@ -73,20 +79,54 @@
     font-size: 1rem;
     font-weight: 600;
     color: #1f2937;
-    margin-bottom: 0.25rem;
+    margin: 0;
 }
 
 .recurring-meta {
     font-size: 0.85rem;
     color: #6b7280;
     display: flex;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .meta-row {
     display: flex;
     align-items: center;
     gap: 0.35rem;
+}
+
+/* Time Input Styles */
+.time-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.time-input {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #374151;
+    background-color: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.time-input:hover {
+    border-color: #9ca3af;
+}
+
+.time-input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.time-separator {
+    color: #6b7280;
+    font-weight: 500;
 }
 
 /* Toggle Switch Styles */

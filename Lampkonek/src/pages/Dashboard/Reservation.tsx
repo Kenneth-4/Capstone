@@ -12,7 +12,9 @@ import {
     MapPin,
     User as UserIcon,
     X,
-    Repeat
+    Repeat,
+    Edit2,
+    Trash2
 } from 'lucide-react';
 import './Reservation.css';
 import { NewReservationModal } from './NewReservationModal';
@@ -232,6 +234,43 @@ export const Reservation = () => {
         setIsDetailsModalOpen(true);
     };
 
+    const handleDelete = async () => {
+        if (!selectedReservation || selectedReservation.isRecurring) return;
+
+        const confirmMessage = `Are you sure you want to delete the reservation for "${selectedReservation.event_title}"? This action cannot be undone.`;
+
+        if (!window.confirm(confirmMessage)) return;
+
+        setIsUpdating(true);
+        try {
+            const { error } = await supabase
+                .from('reservations')
+                .delete()
+                .eq('id', selectedReservation.id);
+
+            if (error) throw error;
+
+            toast.success('Reservation deleted successfully!');
+            setIsDetailsModalOpen(false);
+            setSelectedReservation(null);
+            fetchReservations();
+        } catch (error: any) {
+            console.error('Error deleting reservation:', error);
+            toast.error(error.message || 'Failed to delete reservation');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleEdit = () => {
+        if (!selectedReservation || selectedReservation.isRecurring) return;
+
+        // Close the details modal and open the edit modal
+        // We'll need to pass the reservation data to NewReservationModal
+        setIsDetailsModalOpen(false);
+        setIsModalOpen(true);
+    };
+
     // Filter reservations based on search
 
 
@@ -442,8 +481,12 @@ export const Reservation = () => {
 
             <NewReservationModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedReservation(null);
+                }}
                 onSuccess={fetchReservations}
+                editReservation={selectedReservation}
             />
 
             <RecurringEventsModal
@@ -566,47 +609,96 @@ export const Reservation = () => {
                                 )}
                             </div>
 
-                            {/* Action Buttons (Only for PENDING status) */}
-                            {selectedReservation.status === 'PENDING' && (
-                                <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                            {/* Action Buttons */}
+                            <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb', flexWrap: 'wrap' }}>
+                                {/* Delete Button - Available for all non-recurring reservations */}
+                                {!selectedReservation.isRecurring && (
                                     <button
-                                        onClick={() => handleStatusUpdate('REJECTED')}
+                                        onClick={handleDelete}
                                         disabled={isUpdating}
+                                        title="Delete reservation"
                                         style={{
-                                            flex: 1,
-                                            padding: '0.75rem 1.5rem',
-                                            backgroundColor: '#ef4444',
+                                            padding: '0.75rem',
+                                            backgroundColor: '#dc2626',
                                             color: 'white',
                                             border: 'none',
                                             borderRadius: '0.5rem',
-                                            fontSize: '1rem',
-                                            fontWeight: 500,
                                             cursor: isUpdating ? 'not-allowed' : 'pointer',
-                                            opacity: isUpdating ? 0.6 : 1
+                                            opacity: isUpdating ? 0.6 : 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
                                         }}
                                     >
-                                        {isUpdating ? 'Updating...' : 'Reject'}
+                                        <Trash2 size={20} />
                                     </button>
+                                )}
+
+                                {/* Edit Button - Only for PENDING reservations */}
+                                {selectedReservation.status === 'PENDING' && !selectedReservation.isRecurring && (
                                     <button
-                                        onClick={() => handleStatusUpdate('APPROVED')}
+                                        onClick={handleEdit}
                                         disabled={isUpdating}
+                                        title="Edit reservation"
                                         style={{
-                                            flex: 1,
-                                            padding: '0.75rem 1.5rem',
-                                            backgroundColor: '#10b981',
+                                            padding: '0.75rem',
+                                            backgroundColor: '#3b82f6',
                                             color: 'white',
                                             border: 'none',
                                             borderRadius: '0.5rem',
-                                            fontSize: '1rem',
-                                            fontWeight: 500,
                                             cursor: isUpdating ? 'not-allowed' : 'pointer',
-                                            opacity: isUpdating ? 0.6 : 1
+                                            opacity: isUpdating ? 0.6 : 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
                                         }}
                                     >
-                                        {isUpdating ? 'Updating...' : 'Approve'}
+                                        <Edit2 size={20} />
                                     </button>
-                                </div>
-                            )}
+                                )}
+
+                                {/* Approve/Reject Buttons - Only for PENDING status */}
+                                {selectedReservation.status === 'PENDING' && (
+                                    <>
+                                        <button
+                                            onClick={() => handleStatusUpdate('REJECTED')}
+                                            disabled={isUpdating}
+                                            style={{
+                                                flex: '1 1 auto',
+                                                padding: '0.75rem 1.5rem',
+                                                backgroundColor: '#ef4444',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '0.5rem',
+                                                fontSize: '1rem',
+                                                fontWeight: 500,
+                                                cursor: isUpdating ? 'not-allowed' : 'pointer',
+                                                opacity: isUpdating ? 0.6 : 1
+                                            }}
+                                        >
+                                            {isUpdating ? 'Updating...' : 'Reject'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleStatusUpdate('APPROVED')}
+                                            disabled={isUpdating}
+                                            style={{
+                                                flex: '1 1 auto',
+                                                padding: '0.75rem 1.5rem',
+                                                backgroundColor: '#10b981',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '0.5rem',
+                                                fontSize: '1rem',
+                                                fontWeight: 500,
+                                                cursor: isUpdating ? 'not-allowed' : 'pointer',
+                                                opacity: isUpdating ? 0.6 : 1
+                                            }}
+                                        >
+                                            {isUpdating ? 'Updating...' : 'Approve'}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

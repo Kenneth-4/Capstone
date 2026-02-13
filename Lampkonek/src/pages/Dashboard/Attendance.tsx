@@ -17,6 +17,7 @@ import { TakeAttendanceModal } from './TakeAttendanceModal';
 import { AttendanceChecklistModal } from './AttendanceChecklistModal';
 import { AddAttendanceModal } from './AddAttendanceModal';
 import { UserProfile } from '../../components/UserProfile';
+import { initializeRecurringEvents } from '../../utils/initializeRecurringEvents';
 import './Attendance.css';
 
 interface AttendanceRecord {
@@ -77,15 +78,41 @@ export const Attendance = () => {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const { data } = await supabase
+                // Initialize recurring events if they don't exist
+                await initializeRecurringEvents();
+
+                // Fetch approved reservation events
+                const { data: reservationsData } = await supabase
                     .from('reservations')
                     .select('event_title')
                     .eq('status', 'APPROVED');
 
-                if (data) {
-                    const titles = Array.from(new Set(data.map((item: any) => item.event_title)));
-                    setEventsList(titles);
+                // Fetch recurring events
+                const { data: settingsData } = await supabase
+                    .from('app_settings')
+                    .select('value')
+                    .eq('key', 'recurring_events')
+                    .single();
+
+                let allEventTitles: string[] = [];
+
+                // Add reservation event titles
+                if (reservationsData) {
+                    allEventTitles = reservationsData.map((item: any) => item.event_title);
                 }
+
+                // Add recurring event titles
+                if (settingsData?.value) {
+                    const recurringEvents: any[] = JSON.parse(settingsData.value);
+                    const recurringTitles = recurringEvents
+                        .filter(e => e.enabled)
+                        .map(e => e.title);
+                    allEventTitles = [...allEventTitles, ...recurringTitles];
+                }
+
+                // Remove duplicates
+                const uniqueTitles = Array.from(new Set(allEventTitles));
+                setEventsList(uniqueTitles);
             } catch (error) {
                 console.error('Error fetching event filters:', error);
             }

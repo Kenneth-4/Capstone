@@ -8,6 +8,23 @@ interface NewReservationModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
+    editReservation?: Reservation | null;
+}
+
+interface Reservation {
+    id: string;
+    event_title: string;
+    event_date: string;
+    start_time: string;
+    end_time: string;
+    venue: string;
+    organizer_name: string;
+    status: string;
+    purpose: string;
+    expected_attendees: number;
+    setup_required?: string;
+    equipment_needed?: string[];
+    additional_notes?: string;
 }
 
 const EQUIPMENT_OPTIONS = [
@@ -15,7 +32,7 @@ const EQUIPMENT_OPTIONS = [
     'Livestream Equipment', 'Chairs', 'Tables', 'Whiteboard'
 ];
 
-export const NewReservationModal: React.FC<NewReservationModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const NewReservationModal: React.FC<NewReservationModalProps> = ({ isOpen, onClose, onSuccess, editReservation }) => {
     const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
     const [customEquipment, setCustomEquipment] = useState('');
     const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -32,7 +49,26 @@ export const NewReservationModal: React.FC<NewReservationModalProps> = ({ isOpen
         additionalNotes: ''
     });
 
-    // Reset form when modal opens/closes
+    // Pre-fill form when editing
+    useEffect(() => {
+        if (isOpen && editReservation) {
+            setFormData({
+                eventTitle: editReservation.event_title,
+                venue: editReservation.venue,
+                eventDate: editReservation.event_date,
+                startTime: editReservation.start_time,
+                endTime: editReservation.end_time,
+                purpose: editReservation.purpose,
+                expectedAttendees: editReservation.expected_attendees.toString(),
+                setupRequired: editReservation.setup_required || '',
+                additionalNotes: editReservation.additional_notes || ''
+            });
+            setSelectedEquipment(editReservation.equipment_needed || []);
+            setAgreedToTerms(true); // Already agreed when created
+        }
+    }, [isOpen, editReservation]);
+
+    // Reset form when modal opens/closes (only if not editing)
     useEffect(() => {
         if (!isOpen) {
             setFormData({
@@ -100,44 +136,68 @@ export const NewReservationModal: React.FC<NewReservationModalProps> = ({ isOpen
         setIsSubmitting(true);
 
         try {
-            // Get current user
-            const { data: { user } } = await supabase.auth.getUser();
+            if (editReservation) {
+                // Update existing reservation
+                const { error } = await supabase
+                    .from('reservations')
+                    .update({
+                        event_title: formData.eventTitle,
+                        venue: formData.venue,
+                        event_date: formData.eventDate,
+                        start_time: formData.startTime,
+                        end_time: formData.endTime,
+                        purpose: formData.purpose,
+                        expected_attendees: attendees,
+                        setup_required: formData.setupRequired || null,
+                        equipment_needed: selectedEquipment.length > 0 ? selectedEquipment : null,
+                        additional_notes: formData.additionalNotes || null
+                    })
+                    .eq('id', editReservation.id);
 
-            if (!user) {
-                throw new Error('You must be logged in to create a reservation');
+                if (error) throw error;
+
+                toast.success('Reservation updated successfully!');
+            } else {
+                // Create new reservation
+                // Get current user
+                const { data: { user } } = await supabase.auth.getUser();
+
+                if (!user) {
+                    throw new Error('You must be logged in to create a reservation');
+                }
+
+                // Get user's full name from profiles
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name')
+                    .eq('id', user.id)
+                    .single();
+
+                const organizerName = profile?.full_name || user.email || 'Unknown';
+
+                // Insert reservation
+                const { error } = await supabase
+                    .from('reservations')
+                    .insert({
+                        user_id: user.id,
+                        event_title: formData.eventTitle,
+                        venue: formData.venue,
+                        event_date: formData.eventDate,
+                        start_time: formData.startTime,
+                        end_time: formData.endTime,
+                        purpose: formData.purpose,
+                        expected_attendees: attendees,
+                        setup_required: formData.setupRequired || null,
+                        equipment_needed: selectedEquipment.length > 0 ? selectedEquipment : null,
+                        additional_notes: formData.additionalNotes || null,
+                        organizer_name: organizerName,
+                        status: 'PENDING'
+                    });
+
+                if (error) throw error;
+
+                toast.success('Reservation submitted successfully! Awaiting approval.');
             }
-
-            // Get user's full name from profiles
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('full_name')
-                .eq('id', user.id)
-                .single();
-
-            const organizerName = profile?.full_name || user.email || 'Unknown';
-
-            // Insert reservation
-            const { error } = await supabase
-                .from('reservations')
-                .insert({
-                    user_id: user.id,
-                    event_title: formData.eventTitle,
-                    venue: formData.venue,
-                    event_date: formData.eventDate,
-                    start_time: formData.startTime,
-                    end_time: formData.endTime,
-                    purpose: formData.purpose,
-                    expected_attendees: attendees,
-                    setup_required: formData.setupRequired || null,
-                    equipment_needed: selectedEquipment.length > 0 ? selectedEquipment : null,
-                    additional_notes: formData.additionalNotes || null,
-                    organizer_name: organizerName,
-                    status: 'PENDING'
-                });
-
-            if (error) throw error;
-
-            toast.success('Reservation submitted successfully! Awaiting approval.');
 
             // Close modal and refresh
             onClose();
@@ -145,8 +205,8 @@ export const NewReservationModal: React.FC<NewReservationModalProps> = ({ isOpen
                 setTimeout(() => onSuccess(), 100);
             }
         } catch (error: any) {
-            console.error('Error creating reservation:', error);
-            toast.error(error.message || 'Failed to create reservation');
+            console.error('Error saving reservation:', error);
+            toast.error(error.message || 'Failed to save reservation');
         } finally {
             setIsSubmitting(false);
         }
@@ -156,7 +216,7 @@ export const NewReservationModal: React.FC<NewReservationModalProps> = ({ isOpen
         <div className="modal-backdrop">
             <div className="modal-container reservation-modal">
                 <div className="modal-header">
-                    <h2>Event Information</h2> {/* Using this as the main title based on image, though typically it's "New Reservation" */}
+                    <h2>{editReservation ? 'Edit Reservation' : 'Event Information'}</h2>
                     <button className="close-btn" onClick={onClose}>
                         <X size={24} />
                     </button>
@@ -386,7 +446,10 @@ export const NewReservationModal: React.FC<NewReservationModalProps> = ({ isOpen
                         disabled={isSubmitting}
                     >
                         <FileText size={18} />
-                        {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                        {isSubmitting
+                            ? (editReservation ? 'Updating...' : 'Submitting...')
+                            : (editReservation ? 'Update Reservation' : 'Submit Request')
+                        }
                     </button>
                 </div>
             </div>

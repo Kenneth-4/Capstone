@@ -9,6 +9,7 @@ interface AttendanceChecklistModalProps {
 
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
+import { initializeRecurringEvents } from '../../utils/initializeRecurringEvents';
 
 
 
@@ -50,26 +51,64 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
 
     React.useEffect(() => {
         if (isOpen) {
-            fetchApprovedEvents(selectedDate);
+            // Initialize recurring events if they don't exist
+            initializeRecurringEvents().then(() => {
+                fetchApprovedEvents(selectedDate);
+            });
         }
     }, [selectedDate, isOpen]);
 
     const fetchApprovedEvents = async (date: string) => {
         try {
             console.log('Fetching events for date:', date);
-            const { data, error } = await supabase
+
+            // Fetch approved reservations
+            const { data: reservationsData, error: reservationsError } = await supabase
                 .from('reservations')
                 .select('event_title')
                 .eq('status', 'APPROVED')
                 .eq('event_date', date);
 
-            if (error) throw error;
+            if (reservationsError) throw reservationsError;
 
-            console.log('Fetched events:', data);
+            // Fetch recurring events
+            const { data: settingsData } = await supabase
+                .from('app_settings')
+                .select('value')
+                .eq('key', 'recurring_events')
+                .single();
 
-            if (data && data.length > 0) {
-                setApprovedEvents(data);
-                setSelectedEvent(data[0].event_title);
+            let allEvents: any[] = reservationsData || [];
+            console.log('Reservations:', reservationsData);
+
+            // Add recurring events that match this day of week
+            if (settingsData?.value) {
+                const recurringEvents: any[] = JSON.parse(settingsData.value);
+                console.log('All recurring events from DB:', recurringEvents);
+
+                const selectedDateObj = new Date(date + 'T00:00:00');
+                const dayOfWeek = selectedDateObj.getDay();
+                console.log(`Selected date: ${date}, Day of week: ${dayOfWeek} (${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek]})`);
+
+                const matchingRecurringEvents = recurringEvents
+                    .filter(e => {
+                        const matches = e.enabled && e.dayOfWeek === dayOfWeek;
+                        console.log(`  - ${e.title}: enabled=${e.enabled}, dayOfWeek=${e.dayOfWeek}, matches=${matches}`);
+                        return matches;
+                    })
+                    .map(e => ({ event_title: e.title }));
+
+                console.log('Matching recurring events:', matchingRecurringEvents);
+                allEvents = [...allEvents, ...matchingRecurringEvents];
+            } else {
+                console.log('No recurring events settings in database');
+            }
+
+            console.log('Fetched events:', allEvents);
+
+            if (allEvents.length > 0) {
+                setApprovedEvents(allEvents);
+                setSelectedEvent(allEvents[0].event_title);
             } else {
                 setApprovedEvents([]);
                 setSelectedEvent('');

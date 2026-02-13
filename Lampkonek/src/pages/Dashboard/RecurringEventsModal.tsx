@@ -90,6 +90,12 @@ export const RecurringEventsModal: React.FC<RecurringEventsModalProps> = ({ isOp
         ));
     };
 
+    const handleTimeChange = (key: string, field: 'time' | 'endTime', value: string) => {
+        setConfig(prev => prev.map(item =>
+            item.key === key ? { ...item, [field]: value } : item
+        ));
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -110,30 +116,44 @@ export const RecurringEventsModal: React.FC<RecurringEventsModalProps> = ({ isOp
                     <div className="recurring-list">
                         {config.map(item => (
                             <div key={item.key} className={`recurring-item ${item.enabled ? 'active' : ''}`}>
-                                <div className="recurring-info">
+                                <div className="recurring-item-header">
                                     <h4 className="recurring-title">{item.title}</h4>
-                                    <div className="recurring-meta">
-                                        <div className="meta-row">
-                                            <Calendar size={14} />
-                                            <span>
-                                                Every {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][item.dayOfWeek]}
-                                            </span>
-                                        </div>
-                                        <div className="meta-row">
-                                            <Clock size={14} />
-                                            <span>{item.time} - {item.endTime}</span>
-                                        </div>
+                                    <div className="toggle-switch">
+                                        <label className="switch">
+                                            <input
+                                                type="checkbox"
+                                                checked={item.enabled}
+                                                onChange={() => handleToggle(item.key)}
+                                            />
+                                            <span className="slider round"></span>
+                                        </label>
                                     </div>
                                 </div>
-                                <div className="toggle-switch">
-                                    <label className="switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={item.enabled}
-                                            onChange={() => handleToggle(item.key)}
-                                        />
-                                        <span className="slider round"></span>
-                                    </label>
+                                <div className="recurring-meta">
+                                    <div className="meta-row">
+                                        <Calendar size={14} />
+                                        <span>
+                                            Every {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][item.dayOfWeek]}
+                                        </span>
+                                    </div>
+                                    <div className="meta-row">
+                                        <Clock size={14} />
+                                        <div className="time-inputs">
+                                            <input
+                                                type="time"
+                                                value={item.time}
+                                                onChange={(e) => handleTimeChange(item.key, 'time', e.target.value)}
+                                                className="time-input"
+                                            />
+                                            <span className="time-separator">-</span>
+                                            <input
+                                                type="time"
+                                                value={item.endTime}
+                                                onChange={(e) => handleTimeChange(item.key, 'endTime', e.target.value)}
+                                                className="time-input"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}

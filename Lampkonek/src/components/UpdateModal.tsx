@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.0.9</span>
+                            <span className="version-number">v1.1.0</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,23 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 13, 2026</span>
+                                <h4 className="update-title">Reservation Management & Permission System Fix 🔧</h4>
+                                <p>We've enhanced reservation management with edit/delete capabilities and fixed the user roles permission system to work as intended.</p>
+                                <ul className="feature-list">
+                                    <li>✏️ <strong>Edit Reservations:</strong> Pending reservations can now be edited directly from the details modal.</li>
+                                    <li>🗑️ <strong>Delete Reservations:</strong> All non-recurring reservations can be deleted with confirmation.</li>
+                                    <li>🎨 <strong>Icon-Only Buttons:</strong> Cleaner UI with Edit and Delete icons instead of text buttons.</li>
+                                    <li>🔒 <strong>Permission System Fixed:</strong> User role permissions now actually control dashboard access! Changes in Settings → User Roles are now applied immediately.</li>
+                                    <li>🔄 <strong>Dynamic Permissions:</strong> Dashboard now fetches permissions from the database instead of using hardcoded values.</li>
+                                    <li>📊 <strong>Debug Logging:</strong> Added console logs to help troubleshoot permission issues.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 13, 2026</span>
                                 <h4 className="update-title">Member Form & Dashboard Polish 💎</h4>
