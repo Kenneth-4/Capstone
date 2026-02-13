@@ -11,10 +11,12 @@ import {
     Clock,
     MapPin,
     User as UserIcon,
-    X
+    X,
+    Repeat
 } from 'lucide-react';
 import './Reservation.css';
 import { NewReservationModal } from './NewReservationModal';
+import { RecurringEventsModal } from './RecurringEventsModal';
 import { UserProfile } from '../../components/UserProfile';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
@@ -33,6 +35,17 @@ interface Reservation {
     setup_required?: string;
     equipment_needed?: string[];
     additional_notes?: string;
+    isRecurring?: boolean; // Added for display handling
+}
+
+interface RecurringEventConfig {
+    key: string;
+    title: string;
+    dayOfWeek: number;
+    time: string;
+    endTime: string;
+    enabled: boolean;
+    venue: string;
 }
 
 // Icon mapping for different event types
@@ -55,6 +68,8 @@ export const Reservation = () => {
     const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
+    const [recurringEvents, setRecurringEvents] = useState<RecurringEventConfig[]>([]);
 
     // Calendar state
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -62,7 +77,31 @@ export const Reservation = () => {
 
     useEffect(() => {
         fetchReservations();
+        fetchRecurringSettings();
     }, []);
+
+    const fetchRecurringSettings = async () => {
+        try {
+            const { data } = await supabase
+                .from('app_settings')
+                .select('value')
+                .eq('key', 'recurring_events')
+                .single();
+
+            if (data && data.value) {
+                setRecurringEvents(JSON.parse(data.value));
+            } else {
+                // Defaults matching modal defaults to ensure they show up even if not saved yet
+                setRecurringEvents([
+                    { key: 'sunday_service', title: 'Sunday Service', dayOfWeek: 0, time: '09:00', endTime: '11:00', enabled: true, venue: 'Main Sanctuary' },
+                    { key: 'prayer_meeting', title: 'Prayer Meeting', dayOfWeek: 1, time: '19:00', endTime: '20:30', enabled: true, venue: 'Prayer Room' },
+                    { key: 'bible_study', title: 'Bible Study', dayOfWeek: 5, time: '18:00', endTime: '19:30', enabled: true, venue: 'Community Hall' },
+                ]);
+            }
+        } catch (error) {
+            console.error('Error fetching recurring settings:', error);
+        }
+    };
 
     const fetchReservations = async () => {
         try {
@@ -107,14 +146,45 @@ export const Reservation = () => {
         setSelectedDate(null);
     };
 
+    // Generate instances of recurring events for a specific date
+    const getRecurringInstancesForDate = (date: number) => {
+        const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), date);
+        const dayOfWeek = targetDate.getDay();
+        const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+
+        return recurringEvents
+            .filter(event => event.enabled && event.dayOfWeek === dayOfWeek)
+            .map(event => ({
+                id: `recurring-${event.key}-${dateStr}`,
+                event_title: event.title,
+                event_date: dateStr,
+                start_time: event.time,
+                end_time: event.endTime,
+                venue: event.venue,
+                organizer_name: 'Church',
+                status: 'APPROVED',
+                purpose: 'Automatic Recurring Event',
+                expected_attendees: 0,
+                isRecurring: true
+            } as Reservation));
+    };
+
     const getReservationsForDate = (date: number) => {
         const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-        return reservations.filter(res => res.event_date === dateStr);
+        const manual = reservations.filter(res => res.event_date === dateStr);
+        const recurring = getRecurringInstancesForDate(date);
+        return [...manual, ...recurring];
     };
 
     const hasReservationOnDate = (date: number) => {
         return getReservationsForDate(date).length > 0;
     };
+
+    // Calculate all reservations including recurring for the current view and future (simplified for upcoming list)
+    // Note: This logic for 'upcoming' needs to generate recurring events for the next few dates/weeks.
+    // For simplicity, we'll generate recurring events for the next 30 days and add them to the list.
+
+
 
     // Generate calendar dates
     const daysInMonth = getDaysInMonth(currentDate);
@@ -163,11 +233,7 @@ export const Reservation = () => {
     };
 
     // Filter reservations based on search
-    const filteredReservations = reservations.filter(res =>
-        res.event_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        res.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        res.venue.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+
 
     // Calculate stats
     const stats = {
@@ -179,7 +245,21 @@ export const Reservation = () => {
 
     // Get upcoming reservations (future dates only)
     const today = new Date().toISOString().split('T')[0];
-    const upcomingReservations = filteredReservations.filter(res => res.event_date >= today);
+    // Removed generating recurring events for the list to satisfy user request
+
+    // Filter standard reservations based on search query
+    const filteredReservations = reservations.filter(res =>
+        res.event_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        res.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        res.venue.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const upcomingReservations = filteredReservations
+        .filter(res => res.event_date >= today)
+        .sort((a, b) => {
+            if (a.event_date !== b.event_date) return a.event_date.localeCompare(b.event_date);
+            return a.start_time.localeCompare(b.start_time);
+        });
 
     return (
         <div className="reservation-content">
@@ -200,14 +280,23 @@ export const Reservation = () => {
 
             <div className="reservation-container">
                 {/* Controls */}
-                <div className="reservation-controls">
+                <div className="reservation-controls" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <input
                         type="text"
                         className="res-search-input"
                         placeholder="Search by ID or Type..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        style={{ flex: 1 }}
                     />
+                    <button
+                        className="add-res-btn"
+                        onClick={() => setIsRecurringModalOpen(true)}
+                        style={{ backgroundColor: 'white', color: '#374151', border: '1px solid #e5e7eb' }}
+                    >
+                        <Repeat size={18} />
+                        Auto Events
+                    </button>
                     <button className="add-res-btn" onClick={() => setIsModalOpen(true)}>
                         <Plus size={18} />
                         Add Reservation
@@ -355,6 +444,12 @@ export const Reservation = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={fetchReservations}
+            />
+
+            <RecurringEventsModal
+                isOpen={isRecurringModalOpen}
+                onClose={() => setIsRecurringModalOpen(false)}
+                onUpdate={fetchRecurringSettings}
             />
 
             {/* Reservation Details Modal */}

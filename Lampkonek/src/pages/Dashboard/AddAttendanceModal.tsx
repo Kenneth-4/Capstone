@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
@@ -21,7 +21,11 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
     const [mode, setMode] = useState('Onsite'); // Assuming 'mode' isn't in DB schema yet, we might need to add it or store in remarks? 
     // The previous modal didn't have 'mode'. Let's check the schema implied by previous turn.
     // The user didn't mention 'mode' column. I'll store it in remarks for now if needed, or omit if not supported.
-    // Actually, let's keep it in UI state but maybe append to remarks if no column.
+    // Search/Dropdown State
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
 
     const [date, setDate] = useState(() => {
         const today = new Date();
@@ -49,6 +53,30 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
             fetchApprovedEvents(date);
         }
     }, [date]);
+
+    // Handle click outside dropdown
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const filteredMembers = members.filter(member =>
+        member.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleMemberSelect = (member: Member) => {
+        setMemberId(member.id);
+        setSearchTerm(member.full_name);
+        setIsDropdownOpen(false);
+    };
 
     const fetchMembers = async () => {
         try {
@@ -135,17 +163,38 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
                             <label>Member Name <span className="required">*</span></label>
-                            <select
-                                className="form-input"
-                                value={memberId}
-                                onChange={(e) => setMemberId(e.target.value)}
-                                required
-                            >
-                                <option value="" disabled>Select a member</option>
-                                {members.map(member => (
-                                    <option key={member.id} value={member.id}>{member.full_name}</option>
-                                ))}
-                            </select>
+                            <div className="autocomplete-container" ref={dropdownRef}>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="Search member..."
+                                    value={searchTerm}
+                                    onChange={(e) => {
+                                        setSearchTerm(e.target.value);
+                                        setIsDropdownOpen(true);
+                                        setMemberId(''); // Clear selection when typing
+                                    }}
+                                    onFocus={() => setIsDropdownOpen(true)}
+                                    required
+                                />
+                                {isDropdownOpen && (
+                                    <div className="autocomplete-dropdown">
+                                        {filteredMembers.length > 0 ? (
+                                            filteredMembers.map(member => (
+                                                <div
+                                                    key={member.id}
+                                                    className="autocomplete-item"
+                                                    onClick={() => handleMemberSelect(member)}
+                                                >
+                                                    {member.full_name}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="no-results">No members found</div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="form-row-split">

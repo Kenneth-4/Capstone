@@ -16,6 +16,7 @@ interface Member {
     id: string;
     name: string;
     ministry: string;
+    cluster: string;
     remarks: string;
     isPresent: boolean;
     isAbsent: boolean;
@@ -26,7 +27,7 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
     const [employees, setEmployees] = useState<Member[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [ministryFilter, setMinistryFilter] = useState('All');
+    const [clusterFilter, setClusterFilter] = useState('All');
     const [selectedDate, setSelectedDate] = useState(() => {
         const today = new Date();
         const year = today.getFullYear();
@@ -115,6 +116,7 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
                         id: profile.id,
                         name: profile.full_name || 'Unknown',
                         ministry: profile.ministry || 'None',
+                        cluster: profile.cluster || 'None',
                         remarks: existingRecord?.remarks || '',
                         isPresent: existingRecord?.status === 'Present',
                         isAbsent: existingRecord?.status === 'Absent',
@@ -133,12 +135,12 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
 
     if (!isOpen) return null;
 
-    const ministries = ['All', ...new Set(employees.map(emp => emp.ministry))];
+    const clusters = ['All', ...new Set(employees.map(emp => emp.cluster))];
 
     const filteredEmployees = employees.filter(emp => {
         const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesMinistry = ministryFilter === 'All' || emp.ministry === ministryFilter;
-        return matchesSearch && matchesMinistry;
+        const matchesCluster = clusterFilter === 'All' || emp.cluster === clusterFilter;
+        return matchesSearch && matchesCluster;
     });
 
     const handleAttendanceChange = (id: string, type: 'Present' | 'Absent') => {
@@ -153,11 +155,7 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
         }));
     };
 
-    const handleRemarksChange = (id: string, value: string) => {
-        setEmployees(employees.map(emp =>
-            emp.id === id ? { ...emp, remarks: value } : emp
-        ));
-    };
+
 
     const handleSave = async () => {
         try {
@@ -200,7 +198,7 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
 
             const { error } = await supabase
                 .from('attendance')
-                .upsert(records, { onConflict: 'user_id,date' }); // Upsert based on user_id and date
+                .upsert(records, { onConflict: 'user_id,date,event' }); // Upsert based on user_id, date, and event
 
             if (error) throw error;
 
@@ -271,11 +269,11 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
                         <div className="filter-dropdown" style={{ flex: 1 }}>
                             <Filter size={20} className="filter-icon" />
                             <select
-                                value={ministryFilter}
-                                onChange={(e) => setMinistryFilter(e.target.value)}
+                                value={clusterFilter}
+                                onChange={(e) => setClusterFilter(e.target.value)}
                             >
-                                {ministries.map(ministry => (
-                                    <option key={ministry} value={ministry}>{ministry}</option>
+                                {clusters.map(cluster => (
+                                    <option key={cluster} value={cluster}>{cluster}</option>
                                 ))}
                             </select>
                         </div>
@@ -286,9 +284,8 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
                     <table className="checklist-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '25%' }}>Employee Name</th>
-                                <th style={{ width: '20%' }}>Ministry</th>
-                                <th style={{ width: '25%' }}>Remarks</th>
+                                <th style={{ width: '40%' }}>Employee Name</th>
+                                <th style={{ width: '30%' }}>Cluster</th>
                                 <th style={{ width: '15%', textAlign: 'center' }}>Present</th>
                                 <th style={{ width: '15%', textAlign: 'center' }}>Absent</th>
                             </tr>
@@ -297,16 +294,8 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
                             {filteredEmployees.map(emp => (
                                 <tr key={emp.id}>
                                     <td className="employee-info">{emp.name}</td>
-                                    <td className="employee-ministry">{emp.ministry}</td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            className="remarks-input"
-                                            placeholder="Add remarks..."
-                                            value={emp.remarks}
-                                            onChange={(e) => handleRemarksChange(emp.id, e.target.value)}
-                                        />
-                                    </td>
+                                    <td className="employee-ministry">{emp.cluster}</td>
+
                                     <td style={{ textAlign: 'center' }}>
                                         <div className="checkbox-wrapper">
                                             <input

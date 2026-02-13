@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.0.7</span>
+                            <span className="version-number">v1.0.9</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,36 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 13, 2026</span>
+                                <h4 className="update-title">Member Form & Dashboard Polish 💎</h4>
+                                <p>We've refined the member management experience and optimized the dashboard layout.</p>
+                                <ul className="feature-list">
+                                    <li>📝 <strong>Enhanced Member Form:</strong> Complete redesign with clear sections for Basic, Church, and Emergency info.</li>
+                                    <li>📱 <strong>New Data Fields:</strong> Track comprehensive details including Phone, Birthday, Address, and Emergency Contacts.</li>
+                                    <li>📊 <strong>Dashboard Layout Fix:</strong> Optimized the statistics grid to a clean 3x2 layout for better readability.</li>
+                                    <li>🎨 <strong>Visual Polish:</strong> Improved styling, icons, and input fields across the member management module.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 13, 2026</span>
+                                <h4 className="update-title">Recurring Events & Enhanced Automation 🤖</h4>
+                                <p>We've added powerful automation tools to streamline your workflow and keep data accurate.</p>
+                                <ul className="feature-list">
+                                    <li>🔄 <strong>Recurring Events:</strong> Set up weekly events like Sunday Service and Prayer Meeting that auto-appear on your calendar.</li>
+                                    <li>❌ <strong>Auto-Absence:</strong> Members who miss a recurring event are automatically marked as "Absent" once the event ends.</li>
+                                    <li>🏷️ <strong>Status Automation:</strong> Member status (Active, Semi Active, Inactive) is now automatically updated based on monthly attendance.</li>
+                                    <li>ℹ️ <strong>Smart Tooltips:</strong> Added helpful context to explain automation rules right where you need them.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 12, 2026</span>
                                 <h4 className="update-title">Member Management & Permissions Overhaul 🛠️</h4>

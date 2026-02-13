@@ -448,8 +448,8 @@ export const Dashboard = () => {
                         )}
 
                         {/* Stats Grid */}
-                        <div className="stats-grid">
-                            <div className="stat-card">
+                        <div className="dashboard-stats-grid">
+                            <div className="dashboard-stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">Total Members</span>
                                     <span className="stat-value">
@@ -464,7 +464,7 @@ export const Dashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="stat-card">
+                            <div className="dashboard-stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">Attendance This Week</span>
                                     <span className="stat-value">
@@ -479,7 +479,7 @@ export const Dashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="stat-card">
+                            <div className="dashboard-stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">Approved Reservations</span>
                                     <span className="stat-value">
@@ -492,7 +492,7 @@ export const Dashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="stat-card">
+                            <div className="dashboard-stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">Pending Requests</span>
                                     <span className="stat-value">
@@ -507,7 +507,7 @@ export const Dashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="stat-card">
+                            <div className="dashboard-stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">Active Members</span>
                                     <span className="stat-value">
@@ -522,7 +522,7 @@ export const Dashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="stat-card">
+                            <div className="dashboard-stat-card">
                                 <div className="stat-content">
                                     <span className="stat-label">New Members This Month</span>
                                     <span className="stat-value">

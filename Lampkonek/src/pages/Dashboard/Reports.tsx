@@ -204,20 +204,22 @@ export const Reports = () => {
             // Fetch detailed attendance logs with date filter
             const { data: attendanceLogs } = await supabase
                 .from('attendance')
-                .select('date, status')
+                .select('date, status, event')
                 .gte('date', filterStartDate)
                 .order('date', { ascending: false })
-                .limit(50);
+                .limit(500); // Increased limit to capture more data
 
-            // Group by date (no event_name in schema)
+            // Group by date and event
             const logsByDate: Record<string, { date: string; event: string; present: number; absent: number; visitor: number }> = {};
 
             attendanceLogs?.forEach((log: any) => {
-                const key = log.date;
+                const eventName = log.event || 'Service';
+                const key = `${log.date}-${eventName}`;
+
                 if (!logsByDate[key]) {
                     logsByDate[key] = {
                         date: log.date,
-                        event: 'Service', // Default event name since it's not in schema
+                        event: eventName,
                         present: 0,
                         absent: 0,
                         visitor: 0

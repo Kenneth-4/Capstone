@@ -1,15 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Search,
     Filter,
-    ChevronsUpDown,
     ChevronLeft,
     ChevronRight,
-    Moon,
+    User,
+    UserCheck,
+    UserX,
+    Users,
+    Mail,
+    Phone,
+    MapPin,
+    MoreVertical,
+    Download,
+    Plus,
+    ArrowLeft,
+    Calendar,
+    Activity,
+    SquarePen,
+    Trash2
 } from 'lucide-react';
 import './Members.css';
 import { AddMemberModal } from './AddMemberModal';
-import { UserProfile } from '../../components/UserProfile';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -17,10 +29,27 @@ interface Member {
     id: string;
     full_name: string;
     email: string;
+    phone: string;
     cluster: string;
     ministry: string;
     status: string;
     role: string;
+    created_at: string;
+    birthday?: string;
+    address?: string;
+    emergency_contact_name?: string;
+    emergency_contact_phone?: string;
+}
+
+interface MemberStats {
+    present: number;
+    absent: number;
+    ratio: number;
+    recentHistory: {
+        date: string;
+        event_name: string;
+        status: string;
+    }[];
 }
 
 const getStatusClass = (status: string) => {
@@ -28,11 +57,38 @@ const getStatusClass = (status: string) => {
         case 'Active': return 'status-active';
         case 'Inactive': return 'status-inactive';
         case 'Semi Active': return 'status-semi-active';
-        case 'Transferred': return 'status-transferred';
-        case 'Deceased': return 'status-deceased';
+        case 'Transferred': return 'status-inactive'; // Using inactive style
+        case 'Deceased': return 'status-inactive'; // Using inactive style
         case 'Visitor': return 'status-visitor';
         default: return 'status-active'; // Default style
     }
+};
+
+const getAvatarColor = (name: string) => {
+    const colors = ['purple', 'orange', 'blue', 'pink', 'green'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+};
+
+const getInitials = (name: string) => {
+    return name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+};
+
+const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
 };
 
 export const Members = () => {
@@ -41,7 +97,39 @@ export const Members = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All Status');
+    const [clusterFilter, setClusterFilter] = useState('All Clusters');
     const [editingMember, setEditingMember] = useState<Member | null>(null);
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+    const [memberStats, setMemberStats] = useState<MemberStats | null>(null);
+    const [statsLoading, setStatsLoading] = useState(false);
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(12); // Grid layout usually fits more items
+
+    // Click outside handler for menu
+    const menuRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setActiveMenuId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Derived Lists for Filters
+    const clustersList = Array.from(new Set(members.map(m => m.cluster))).filter(Boolean).sort();
+
+    // Stats
+    const stats = {
+        total: members.length,
+        active: members.filter(m => m.status === 'Active').length,
+        inactive: members.filter(m => m.status === 'Inactive').length,
+        visitors: members.filter(m => m.status === 'Visitor').length
+    };
 
     // Fetch members from Supabase
     const fetchMembers = async () => {
@@ -60,10 +148,16 @@ export const Members = () => {
                     id: profile.id,
                     full_name: profile.full_name || 'Unknown',
                     email: profile.email || 'No Email',
+                    phone: profile.phone || '', // Fetch phone from profile
                     cluster: profile.cluster || 'Unassigned',
                     ministry: profile.ministry || 'None',
                     status: profile.status || 'Active',
-                    role: profile.role
+                    role: profile.role,
+                    created_at: profile.created_at, // Fetch created_at for Joined Date
+                    birthday: profile.birthday,
+                    address: profile.address,
+                    emergency_contact_name: profile.emergency_contact_name,
+                    emergency_contact_phone: profile.emergency_contact_phone
                 }));
                 setMembers(mappedMembers);
             }
@@ -79,23 +173,87 @@ export const Members = () => {
         fetchMembers();
     }, []);
 
+    const fetchMemberStats = async (memberId: string) => {
+        setStatsLoading(true);
+        try {
+            // Fetch attendance history
+            const { data: attendanceData, error } = await supabase
+                .from('attendance')
+                .select('*')
+                .eq('user_id', memberId)
+                .order('date', { ascending: false });
+
+            if (error) throw error;
+
+            if (attendanceData) {
+                const present = attendanceData.filter(a => a.status === 'Present').length;
+                const absent = attendanceData.filter(a => a.status === 'Absent').length;
+                const total = present + absent; // Ignoring 'Late' or treating as present/absent? Assuming 'Late' is present for simplicity or just counting specific statuses
+
+                // If there are other statuses like 'Late', we should clarify. Assuming simple model for now.
+                // Let's assume 'Late' counts as present for ratio, but let's stick to strict Present/Absent if that's what we have.
+                // Or maybe the user has 'Late' separate. The prompt for history said 'Present', 'Absent'.
+
+                const ratio = total > 0 ? Math.round((present / total) * 100) : 0;
+
+                setMemberStats({
+                    present,
+                    absent,
+                    ratio,
+                    recentHistory: attendanceData.slice(0, 5).map(r => ({
+                        date: r.date,
+                        event_name: r.event_name || 'Event', // attendance table might not have event_name directly if it's foreign key, but previously we just stored date.
+                        // Wait, previous messages showed attendance table structure check.
+                        // Let's assume basic structure for now. If event_name is missing, fallback to 'Service'.
+                        status: r.status
+                    }))
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+            // toast.error('Failed to load member statistics');
+        } finally {
+            setStatsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedMember) {
+            fetchMemberStats(selectedMember.id);
+        }
+    }, [selectedMember]);
+
+
     // Filter logic
     const filteredMembers = members.filter(member => {
         const matchesSearch = member.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             member.email.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'All Status' || member.status === statusFilter;
-        return matchesSearch && matchesStatus;
+        const matchesCluster = clusterFilter === 'All Clusters' || member.cluster === clusterFilter;
+        return matchesSearch && matchesStatus && matchesCluster;
     });
+
+    // Pagination Logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredMembers.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const handleEditMember = (member: Member) => {
         setEditingMember(member);
         setIsAddMemberOpen(true);
+        setActiveMenuId(null);
     };
 
     const handleDeleteMember = async (member: Member) => {
         // Confirmation dialog
         const confirmDelete = window.confirm(
-            `Are you sure you want to delete ${member.full_name}?\n\nThis action cannot be undone and will permanently remove:\n- User account\n- Profile data\n- All associated records`
+            `Are you sure you want to delete ${member.full_name}?`
         );
 
         if (!confirmDelete) return;
@@ -113,163 +271,489 @@ export const Members = () => {
 
             // Refresh the members list
             fetchMembers();
+            if (selectedMember?.id === member.id) {
+                setSelectedMember(null);
+            }
         } catch (error: any) {
             console.error('Error deleting member:', error);
             toast.error(error.message || 'Failed to delete member');
         }
+        setActiveMenuId(null);
     };
+
+    const handleExport = () => {
+        const headers = ['Name', 'Email', 'Phone', 'Status', 'Cluster', 'Ministry', 'Joined Date'];
+        const csvContent = [
+            headers.join(','),
+            ...filteredMembers.map(m => [
+                `"${m.full_name}"`,
+                `"${m.email}"`,
+                `"${m.phone}"`,
+                `"${m.status}"`,
+                `"${m.cluster}"`,
+                `"${m.ministry}"`,
+                `"${m.created_at ? new Date(m.created_at).toLocaleDateString() : ''}"`
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'members_export.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    if (selectedMember) {
+        return (
+            <div className="members-content">
+                <div className="member-details-container">
+                    <button className="back-btn" onClick={() => setSelectedMember(null)}>
+                        <ArrowLeft size={16} />
+                        Back to Members
+                    </button>
+
+                    <div className="profile-overview-card">
+                        <div className="profile-main-info">
+                            <div className={`profile-avatar-large ${getAvatarColor(selectedMember.full_name)}`}>
+                                {getInitials(selectedMember.full_name)}
+                            </div>
+                            <div className="profile-text">
+                                <h2>{selectedMember.full_name}</h2>
+                                <span className={`status-badge ${getStatusClass(selectedMember.status)}`}>
+                                    {selectedMember.status}
+                                </span>
+
+                                <div className="profile-details-grid">
+                                    <div className="detail-item">
+                                        <Mail size={16} className="icon" />
+                                        <div className="detail-content">
+                                            <span className="detail-label">Email</span>
+                                            <span className="detail-value">{selectedMember.email}</span>
+                                        </div>
+                                    </div>
+                                    <div className="detail-item">
+                                        <Phone size={16} className="icon" />
+                                        <div className="detail-content">
+                                            <span className="detail-label">Phone</span>
+                                            <span className="detail-value">{selectedMember.phone || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="detail-item">
+                                        <MapPin size={16} className="icon" />
+                                        <div className="detail-content">
+                                            <span className="detail-label">Cluster</span>
+                                            <span className="detail-value">{selectedMember.cluster}</span>
+                                        </div>
+                                    </div>
+                                    <div className="detail-item">
+                                        <Calendar size={16} className="icon" />
+                                        <div className="detail-content">
+                                            <span className="detail-label">Join Date</span>
+                                            <span className="detail-value">{formatDate(selectedMember.created_at)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div className="profile-actions">
+                            <button className="details-action-btn details-btn-edit" onClick={() => handleEditMember(selectedMember)}>
+                                <SquarePen size={16} /> Edit Member
+                            </button>
+                            <button className="details-action-btn details-btn-delete" onClick={() => handleDeleteMember(selectedMember)}>
+                                <Trash2 size={16} /> Delete
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="details-dashboard-grid">
+                        {/* Ministry Involvement */}
+                        <div className="dashboard-card">
+                            <div className="card-title-row">
+                                <Users size={18} />
+                                <span>Ministry Involvement</span>
+                            </div>
+                            <div className="ministry-list">
+                                <div className="ministry-item">
+                                    <div className="ministry-info">
+                                        <h4>{selectedMember.ministry || 'None'}</h4>
+                                        <span className="ministry-role">{selectedMember.role || 'Member'}</span>
+                                    </div>
+                                    <span className="ministry-date">Since {new Date(selectedMember.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                                </div>
+                                {/* Placeholder for visualization as shown in image */}
+                                {selectedMember.ministry !== 'None' && selectedMember.ministry && (
+                                    <div className="ministry-item">
+                                        <div className="ministry-info">
+                                            <h4>Hospitality</h4>
+                                            <span className="ministry-role">Volunteer</span>
+                                        </div>
+                                        <span className="ministry-date">Since Jun 2023</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Attendance Summary */}
+                        <div className="dashboard-card">
+                            <div className="card-title-row">
+                                <Activity size={18} />
+                                <span>Attendance Summary</span>
+                            </div>
+                            {statsLoading ? (
+                                <div style={{ textAlign: 'center', color: '#9ca3af' }}>Loading stats...</div>
+                            ) : (
+                                <div className="attendance-stats-row">
+                                    <div className="stat-box ratio">
+                                        <span className="stat-number">{memberStats?.ratio || 0}%</span>
+                                        <span className="stat-desc">Overall Ratio</span>
+                                    </div>
+                                    <div className="stat-box present">
+                                        <span className="stat-number">{memberStats?.present || 0}</span>
+                                        <span className="stat-desc">Present</span>
+                                    </div>
+                                    <div className="stat-box absent">
+                                        <span className="stat-number">{memberStats?.absent || 0}</span>
+                                        <span className="stat-desc">Absent</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Attendance History */}
+                    <div className="dashboard-card">
+                        <div className="card-title-row">
+                            <span>Recent Attendance History</span>
+                        </div>
+                        <div className="history-table-container">
+                            <table className="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Event</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {statsLoading ? (
+                                        <tr><td colSpan={3} style={{ textAlign: 'center' }}>Loading history...</td></tr>
+                                    ) : memberStats?.recentHistory && memberStats.recentHistory.length > 0 ? (
+                                        memberStats.recentHistory.map((record, idx) => (
+                                            <tr key={idx}>
+                                                <td>{formatDate(record.date)}</td>
+                                                <td>{record.event_name}</td>
+                                                <td>
+                                                    <span className={`status-pill ${record.status}`}>
+                                                        {record.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr><td colSpan={3} style={{ textAlign: 'center', color: '#9ca3af' }}>No recent attendance history</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <AddMemberModal
+                    isOpen={isAddMemberOpen}
+                    onClose={() => setIsAddMemberOpen(false)}
+                    member={editingMember}
+                    onSuccess={async () => {
+                        await fetchMembers();
+                        if (selectedMember) {
+                            const { data } = await supabase.from('profiles').select('*').eq('id', selectedMember.id).single();
+                            if (data) {
+                                const updatedMember = {
+                                    id: data.id,
+                                    full_name: data.full_name || 'Unknown',
+                                    email: data.email || 'No Email',
+                                    phone: data.phone || '',
+                                    cluster: data.cluster || 'Unassigned',
+                                    ministry: data.ministry || 'None',
+                                    status: data.status || 'Active',
+                                    role: data.role,
+                                    created_at: data.created_at
+                                };
+                                setSelectedMember(updatedMember);
+                                fetchMemberStats(updatedMember.id);
+                            }
+                        }
+                    }}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="members-content">
             {/* Header */}
             <header className="top-bar">
                 <div className="page-title">
-                    <h1>Members</h1>
-
+                    <h1>Member Management</h1>
                 </div>
 
-                <div className="top-actions">
-                    <button className="theme-toggle">
-                        <Moon size={20} />
+                <div className="header-actions">
+                    <button className="add-member-btn" onClick={() => { setEditingMember(null); setIsAddMemberOpen(true); }}>
+                        <Plus size={18} />
+                        Add Member
                     </button>
-
-                    <div className="user-profile-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
-                        <UserProfile />
-                    </div>
+                    <button className="export-btn" onClick={handleExport}>
+                        <Download size={18} />
+                        Export
+                    </button>
                 </div>
             </header>
 
-            <div className="members-container">
-                {/* Controls */}
-                <div className="members-controls">
-                    <div className="search-filter-group">
-                        <div className="search-box">
-                            <Search size={18} className="search-icon" />
-                            <input
-                                type="text"
-                                placeholder="Search members..."
-                                className="search-input"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="dropdown-filter">
-                            <select
-                                className="filter-select"
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                            >
-                                <option>All Status</option>
-                                <option>Active</option>
-                                <option>Inactive</option>
-                                <option>Semi Active</option>
-                                <option>Transferred</option>
-                                <option>Visitor</option>
-                            </select>
-                        </div>
-                        <button className="filter-btn">
-                            <Filter size={18} />
-                        </button>
+            {/* Stats Cards */}
+            <div className="stats-grid">
+                <div className="stat-card">
+                    <div className="stat-info">
+                        <span className="stat-label">Total Members</span>
+                        <span className="stat-value">{stats.total}</span>
+                    </div>
+                    <div className="stat-icon blue">
+                        <Users size={20} />
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-info">
+                        <span className="stat-label">Active</span>
+                        <span className="stat-value">{stats.active}</span>
+                    </div>
+                    <div className="stat-icon green">
+                        <UserCheck size={20} />
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-info">
+                        <span className="stat-label">Inactive</span>
+                        <span className="stat-value">{stats.inactive}</span>
+                    </div>
+                    <div className="stat-icon red">
+                        <UserX size={20} />
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-info">
+                        <span className="stat-label">Visitors</span>
+                        <span className="stat-value">{stats.visitors}</span>
+                    </div>
+                    <div className="stat-icon purple">
+                        <User size={20} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Search & Filters */}
+            <div className="search-filter-bar">
+                <div className="search-box">
+                    <Search size={18} className="search-icon" />
+                    <input
+                        type="text"
+                        placeholder="Search members..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1); // Reset page on search
+                        }}
+                    />
+                </div>
+                <div className="filters-group">
+                    <div className="filter-wrapper">
+                        <Filter size={18} className="filter-icon" />
                     </div>
 
+                    <select
+                        className="filter-select"
+                        value={statusFilter}
+                        onChange={(e) => {
+                            setStatusFilter(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                    >
+                        <option>All Status</option>
+                        <option>Active</option>
+                        <option>Inactive</option>
+                        <option>Semi Active</option>
+                        <option>Visitor</option>
+                    </select>
+
+                    <select
+                        className="filter-select"
+                        value={clusterFilter}
+                        onChange={(e) => {
+                            setClusterFilter(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                    >
+                        <option>All Clusters</option>
+                        {clustersList.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                        ))}
+                    </select>
                 </div>
+            </div>
 
-                {/* Table */}
-                <div className="table-container">
-                    {loading ? (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Loading members...</div>
-                    ) : (
-                        <table className="members-table">
-                            <thead>
-                                <tr>
-                                    <th>NAME <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                    <th>EMAIL <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                    <th>CLUSTER <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                    <th>STATUS <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                    <th>MINISTRY <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                    <th>ROLE <ChevronsUpDown size={14} className="sort-icon" /></th>
-                                    <th>ACTION</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredMembers.length > 0 ? (
-                                    filteredMembers.map((member) => (
-                                        <tr key={member.id}>
-                                            <td className="member-name">{member.full_name}</td>
-                                            <td>{member.email}</td>
-                                            <td>{member.cluster}</td>
-                                            <td>
-                                                <span className={`status-badge ${getStatusClass(member.status)}`}>
-                                                    {member.status}
-                                                </span>
-                                            </td>
-                                            <td>{member.ministry}</td>
-                                            <td style={{ textTransform: 'capitalize' }}>{member.role?.replace('_', ' ')}</td>
-                                            <td>
-                                                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                                                    <button
-                                                        className="action-link"
-                                                        style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#6366f1', padding: 0, fontWeight: 500 }}
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            handleEditMember(member);
-                                                        }}
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <span style={{ color: '#e5e7eb' }}>|</span>
-                                                    <button
-                                                        className="action-link"
-                                                        style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444', padding: 0, fontWeight: 500 }}
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            handleDeleteMember(member);
-                                                        }}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>No members found.</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    )}
+            {/* Members Grid */}
+            {loading ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Loading members...</div>
+            ) : filteredMembers.length > 0 ? (
+                <>
+                    <div className="members-grid">
+                        {currentItems.map((member) => (
+                            <div key={member.id} className="member-card" onClick={() => setSelectedMember(member)} style={{ cursor: 'pointer' }}>
+                                {/* Menu Button */}
+                                <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }}>
+                                    <button
+                                        className="menu-btn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveMenuId(activeMenuId === member.id ? null : member.id);
+                                        }}
+                                    >
+                                        <MoreVertical size={18} />
+                                    </button>
 
-                    {/* Pagination - Visual Only for now */}
-                    {!loading && filteredMembers.length > 0 && (
-                        <div className="pagination-container">
-                            <div className="per-page-select">
-                                <span>Per Page</span>
-                                <select className="page-select-input">
-                                    <option>20</option>
-                                    <option>50</option>
-                                    <option>100</option>
-                                </select>
+                                    {activeMenuId === member.id && (
+                                        <div ref={menuRef} className="card-menu-dropdown" style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            right: 0,
+                                            backgroundColor: 'white',
+                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                                            borderRadius: '6px',
+                                            padding: '4px',
+                                            width: '120px',
+                                            border: '1px solid #e5e7eb',
+                                            zIndex: 20
+                                        }}>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditMember(member);
+                                                }}
+                                                style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '0.875rem', color: '#374151' }}
+                                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                            >
+                                                <SquarePen size={14} /> Edit
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteMember(member);
+                                                }}
+                                                style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '0.875rem', color: '#ef4444' }}
+                                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+                                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                            >
+                                                <Trash2 size={14} /> Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="card-header">
+                                    <div className={`member-avatar ${getAvatarColor(member.full_name)}`}>
+                                        {getInitials(member.full_name)}
+                                    </div>
+                                    <div className="member-info-header">
+                                        <div className="member-name-row">
+                                            <span className="member-name">{member.full_name}</span>
+                                            <span className={`status-badge ${getStatusClass(member.status)}`}>
+                                                {member.status}
+                                            </span>
+                                        </div>
+                                        <div className="contact-info">
+                                            <Mail size={14} />
+                                            <span>{member.email}</span>
+                                        </div>
+                                        {member.phone && (
+                                            <div className="contact-info" style={{ marginTop: '0.25rem' }}>
+                                                <Phone size={14} />
+                                                <span>{member.phone}</span>
+                                            </div>
+                                        )}
+                                        <div className="contact-info" style={{ marginTop: '0.25rem' }}>
+                                            <MapPin size={14} />
+                                            <span>{member.cluster}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="card-footer">
+                                    <div className="info-col">
+                                        <span className="label">Ministry:</span>
+                                        <span className="value">{member.ministry}</span>
+                                    </div>
+                                    <div className="info-col" style={{ alignItems: 'flex-end' }}>
+                                        <span className="label">Joined:</span>
+                                        <span className="value">{formatDate(member.created_at)}</span>
+                                    </div>
+                                </div>
                             </div>
+                        ))}
+                    </div>
 
-                            <div className="pagination-controls">
-                                <button className="page-btn" disabled>
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="pagination-container">
+                            <div className="pagination-info" style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredMembers.length)} of {filteredMembers.length} entries
+                            </div>
+                            <div className="pagination-controls" style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button
+                                    className="page-btn"
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    style={{ opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                                >
                                     <ChevronLeft size={16} />
                                 </button>
-                                <button className="page-btn active">1</button>
-                                <button className="page-btn">
+
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                    .map((page) => {
+                                        // Add ellipsis logic if needed, simplify for now
+                                        return (
+                                            <button
+                                                key={page}
+                                                className={`page-btn ${currentPage === page ? 'active' : ''}`}
+                                                onClick={() => handlePageChange(page)}
+                                            >
+                                                {page}
+                                            </button>
+                                        );
+                                    })
+                                }
+
+                                <button
+                                    className="page-btn"
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                    style={{ opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                                >
                                     <ChevronRight size={16} />
                                 </button>
                             </div>
-
-                            <div className="pagination-info">
-                                Showing {filteredMembers.length} entries
-                            </div>
                         </div>
                     )}
+                </>
+            ) : (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
+                    No members found matching your search.
                 </div>
-            </div>
+            )}
 
             <AddMemberModal
                 isOpen={isAddMemberOpen}

@@ -141,19 +141,7 @@
     font-size: 0.95rem;
 }
 
-.remarks-input {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    outline: none;
-    font-size: 0.9rem;
-    transition: border-color 0.2s;
-}
 
-.remarks-input:focus {
-    border-color: #6366f1;
-}
 
 /* Custom Checkbox */
 .checkbox-wrapper {

@@ -81,49 +81,65 @@
     transform: rotate(90deg);
 }
 
+
 .modal-body {
     padding: 2rem;
     overflow-y: auto;
     flex: 1;
-    /* This pushes the footer to the bottom and allows body to scroll */
 }
 
-/* Scrollbar Styling */
-.modal-body::-webkit-scrollbar {
-    width: 8px;
+.modal-scroll-content {
+    padding: 2rem;
+    overflow-y: auto;
+    flex: 1;
 }
 
-.modal-body::-webkit-scrollbar-track {
+.modal-scroll-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-scroll-content::-webkit-scrollbar-track {
     background: #f1f1f1;
 }
 
-.modal-body::-webkit-scrollbar-thumb {
+.modal-scroll-content::-webkit-scrollbar-thumb {
     background: #d1d5db;
     border-radius: 4px;
 }
 
-.modal-body::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+.form-section {
+    margin-bottom: 2rem;
 }
 
+.form-section:last-child {
+    margin-bottom: 0;
+}
+
+.form-group.full-width {
+    grid-column: span 2;
+}
+
+textarea.form-input {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+
+
 .section-title {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #6b7280;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    position: relative;
-    display: flex;
-    align-items: center;
+    font-size: 1rem;
+    color: #4b5563;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    text-transform: none;
+    letter-spacing: normal;
 }
 
 .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background-color: #e5e7eb;
-    margin-left: 1rem;
+    display: none;
 }
 
 .form-grid {
