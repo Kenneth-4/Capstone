@@ -319,7 +319,24 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
                     </div>
                 </div>
 
-                <div className="checklist-body">
+                {/* Warning message when no event is selected */}
+                {!selectedEvent && (
+                    <div style={{
+                        padding: '1rem',
+                        backgroundColor: '#fef3c7',
+                        border: '1px solid #fbbf24',
+                        borderRadius: '0.5rem',
+                        marginBottom: '1rem',
+                        color: '#92400e',
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        textAlign: 'center'
+                    }}>
+                        ⚠️ Please select an event to mark attendance
+                    </div>
+                )}
+
+                <div className="checklist-body" style={{ opacity: selectedEvent ? 1 : 0.5 }}>
                     <table className="checklist-table">
                         <thead>
                             <tr>
@@ -342,6 +359,8 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
                                                 className="checklist-checkbox"
                                                 checked={emp.isPresent}
                                                 onChange={() => handleAttendanceChange(emp.id, 'Present')}
+                                                disabled={!selectedEvent || loading}
+                                                title={!selectedEvent ? 'Please select an event first' : ''}
                                             />
                                         </div>
                                     </td>
@@ -352,6 +371,8 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
                                                 className="checklist-checkbox"
                                                 checked={emp.isAbsent}
                                                 onChange={() => handleAttendanceChange(emp.id, 'Absent')}
+                                                disabled={!selectedEvent || loading}
+                                                title={!selectedEvent ? 'Please select an event first' : ''}
                                             />
                                         </div>
                                     </td>
@@ -364,7 +385,12 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
 
                 <div className="modal-footer">
                     <button className="btn-cancel" onClick={onClose} disabled={loading}>Cancel</button>
-                    <button className="btn-save" onClick={handleSave} disabled={loading}>
+                    <button
+                        className="btn-save"
+                        onClick={handleSave}
+                        disabled={loading || !selectedEvent}
+                        title={!selectedEvent ? 'Please select an event first' : ''}
+                    >
                         {loading ? 'Saving...' : 'Save Attendance'}
                     </button>
                 </div>
