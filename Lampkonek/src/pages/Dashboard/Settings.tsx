@@ -170,7 +170,7 @@ export const Settings = () => {
                     name: r.name,
                     count: counts[r.name] || 0,
                     description: r.description,
-                    permissions: r.permissions || []
+                    permissions: (r.permissions || []).map((p: string) => p === 'Reservations' ? 'Reservation' : p)
                 }));
 
                 // Add Unassigned if exists

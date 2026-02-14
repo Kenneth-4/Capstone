@@ -44,9 +44,24 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [generatedPassword, setGeneratedPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+
     const [copied, setCopied] = useState(false);
     const [clusterOptions, setClusterOptions] = useState<string[]>([]);
     const [ministryOptions, setMinistryOptions] = useState<string[]>([]);
+    const [selectedMinistries, setSelectedMinistries] = useState<string[]>([]);
+    const [showMinistryDropdown, setShowMinistryDropdown] = useState(false);
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowMinistryDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleCopyPassword = () => {
         navigator.clipboard.writeText(generatedPassword);
@@ -70,6 +85,12 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
                 emergencyContactName: member.emergency_contact_name || '',
                 emergencyContactPhone: member.emergency_contact_phone || ''
             });
+            // Parse ministry string to array
+            if (member.ministry && member.ministry !== 'None') {
+                setSelectedMinistries(member.ministry.split(',').map(m => m.trim()));
+            } else {
+                setSelectedMinistries([]);
+            }
             setGeneratedPassword('');
         } else {
             setFormData({
@@ -85,6 +106,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
                 emergencyContactName: '',
                 emergencyContactPhone: ''
             });
+            setSelectedMinistries([]);
             setGeneratedPassword('');
         }
         setShowPassword(false);
@@ -139,7 +161,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
                 birthday: formData.birthDate || null, // Ensure date format matches DB if needed
                 address: formData.address,
                 cluster: formData.cluster || 'Unassigned',
-                ministry: formData.ministry || 'None',
+                ministry: selectedMinistries.length > 0 ? selectedMinistries.join(', ') : 'None',
                 status: capitalizedStatus,
                 created_at: formData.joinDate ? new Date(formData.joinDate).toISOString() : new Date().toISOString(),
                 emergency_contact_name: formData.emergencyContactName,
@@ -358,19 +380,45 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
                                         ))}
                                     </select>
                                 </div>
-                                <div className="form-group">
+                                <div className="form-group" ref={dropdownRef}>
                                     <label>Ministry <span className="required">*</span></label>
-                                    <select
-                                        className="form-input"
-                                        value={formData.ministry}
-                                        onChange={(e) => setFormData({ ...formData, ministry: e.target.value })}
-                                    >
-                                        <option value="" disabled>Select Ministry</option>
-                                        <option value="None">None</option>
-                                        {ministryOptions.map((opt, idx) => (
-                                            <option key={idx} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
+                                    <div className="multi-select-container">
+                                        <div
+                                            className="form-input multi-select-trigger"
+                                            onClick={() => setShowMinistryDropdown(!showMinistryDropdown)}
+                                            style={{ minHeight: '42px', height: 'auto', flexWrap: 'wrap' }}
+                                        >
+                                            {selectedMinistries.length > 0
+                                                ? selectedMinistries.join(', ')
+                                                : <span style={{ color: '#9ca3af' }}>Select Ministries</span>
+                                            }
+                                        </div>
+                                        {showMinistryDropdown && (
+                                            <div className="multi-select-dropdown">
+                                                {ministryOptions.map((opt, idx) => (
+                                                    <label key={idx} className="checkbox-option">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedMinistries.includes(opt)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    if (opt === 'None') {
+                                                                        setSelectedMinistries(['None']);
+                                                                    } else {
+                                                                        const newSelection = selectedMinistries.filter(m => m !== 'None');
+                                                                        setSelectedMinistries([...newSelection, opt]);
+                                                                    }
+                                                                } else {
+                                                                    setSelectedMinistries(selectedMinistries.filter(m => m !== opt));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <span>{opt}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             <div className="form-grid">

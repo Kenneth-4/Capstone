@@ -379,23 +379,18 @@ export const Members = () => {
                                 <span>Ministry Involvement</span>
                             </div>
                             <div className="ministry-list">
-                                <div className="ministry-item">
-                                    <div className="ministry-info">
-                                        <h4>{selectedMember.ministry || 'None'}</h4>
-                                        <span className="ministry-role">{selectedMember.role || 'Member'}</span>
-                                    </div>
-                                    <span className="ministry-date">Since {new Date(selectedMember.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
-                                </div>
-                                {/* Placeholder for visualization as shown in image */}
-                                {selectedMember.ministry !== 'None' && selectedMember.ministry && (
-                                    <div className="ministry-item">
+                                {(selectedMember.ministry && selectedMember.ministry !== 'None'
+                                    ? selectedMember.ministry.split(',').map(m => m.trim())
+                                    : ['None']
+                                ).map((ministry, idx) => (
+                                    <div className="ministry-item" key={idx}>
                                         <div className="ministry-info">
-                                            <h4>Hospitality</h4>
-                                            <span className="ministry-role">Volunteer</span>
+                                            <h4>{ministry}</h4>
+                                            <span className="ministry-role">{selectedMember.role || 'Member'}</span>
                                         </div>
-                                        <span className="ministry-date">Since Jun 2023</span>
+                                        <span className="ministry-date">Since {new Date(selectedMember.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
                                     </div>
-                                )}
+                                ))}
                             </div>
                         </div>
 

@@ -165,7 +165,7 @@ export const MemberReport = () => {
             const memberListData: MemberListItem[] = profiles?.slice(0, 10).map(p => ({
                 name: p.full_name || 'Unknown',
                 status: p.status || 'Inactive',
-                ministry: 'General', // Placeholder - would need ministries table
+                ministry: p.ministry || 'None',
                 cluster: p.cluster || 'Unassigned',
                 joinDate: p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : 'N/A'
             })) || [];

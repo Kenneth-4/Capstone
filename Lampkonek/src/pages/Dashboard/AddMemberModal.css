@@ -272,6 +272,74 @@ textarea.form-input {
     box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
 }
 
+/* Multi-select styles */
+.multi-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.multi-select-trigger {
+    cursor: pointer;
+    min-height: 42px; /* standard input height from scan */
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.multi-select-trigger:after {
+    content: '';
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #6b7280;
+    pointer-events: none;
+}
+
+.multi-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 4px;
+    padding: 0.5rem;
+}
+
+.checkbox-option {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+    user-select: none;
+}
+
+.checkbox-option:hover {
+    background-color: #f3f4f6;
+}
+
+.checkbox-option input[type="checkbox"] {
+    margin-right: 0.75rem;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.checkbox-option span {
+    font-size: 0.9rem;
+    color: #374151;
+}
+
 /* Responsive adjustments */
 @media (max-width: 640px) {
     .form-grid {
