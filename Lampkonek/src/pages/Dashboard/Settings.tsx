@@ -101,7 +101,7 @@ export const Settings = () => {
     const [selectedRole, setSelectedRole] = useState<GroupStats | null>(null);
     const [tempPermissions, setTempPermissions] = useState<string[]>([]);
 
-    const APP_PAGES = ['Dashboard', 'Attendance', 'Members', 'Reports', 'Settings', 'Reservations', 'Profile'];
+    const APP_PAGES = ['Dashboard', 'Attendance', 'Members', 'Reports', 'Settings', 'Reservation'];
 
     // Delete Modal State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

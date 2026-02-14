@@ -96,7 +96,13 @@ export const Dashboard = () => {
 
                 // Map page names to match navigation items
                 // Permissions are stored as page names like 'Dashboard', 'Members', etc.
-                const tabs = permissions.length > 0 ? permissions : ['My Profile'];
+                const mappedPermissions = permissions.map((p: string) => {
+                    if (p === 'Reservations') return 'Reservation';
+                    if (p === 'Profile') return 'My Profile';
+                    return p;
+                });
+
+                const tabs = mappedPermissions.length > 0 ? mappedPermissions : ['My Profile'];
 
                 // Always ensure My Profile is accessible
                 if (!tabs.includes('My Profile')) {
