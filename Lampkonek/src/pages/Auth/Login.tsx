@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import UpdateModal from '../../components/UpdateModal';
+import { User, Lock, Eye, EyeOff, RefreshCw, HelpCircle, Moon, LogIn } from 'lucide-react';
 import './Login.css';
 
 export const Login = () => {
@@ -26,12 +27,12 @@ export const Login = () => {
 
             if (error) throw error;
 
-            toast.success('Login successful!');
+            toast.success('Welcome back!');
             navigate('/dashboard');
         } catch (error: any) {
             console.error('Login error:', error);
             if (error.message === 'Failed to fetch') {
-                toast.error('Connection failed. Please check your internet or Supabase configuration (.env file).');
+                toast.error('Connection failed. Please check your internet or Supabase configuration.');
             } else if (error.message === 'Invalid login credentials') {
                 toast.error('Invalid email or password.');
             } else {
@@ -44,108 +45,94 @@ export const Login = () => {
 
     return (
         <div className="login-container">
-            <button
-                className="update-icon-btn"
-                onClick={() => setShowUpdateModal(true)}
-                title="Updates & Version"
-            >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                </svg>
-            </button>
-            <UpdateModal isOpen={showUpdateModal} onClose={() => setShowUpdateModal(false)} />
-
             {/* Left Side - Form */}
             <div className="login-left">
-                <div className="login-header">
-                    <h1>Welcome</h1>
-                    <p>Please enter your credentials to log in</p>
-                </div>
 
-                <form className="login-form" onSubmit={handleLogin}>
-                    <div className="input-group">
-                        <label htmlFor="username">Email Address</label>
-                        <div className="input-wrapper">
-                            <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                            <input type="text" id="username" placeholder="Enter your email" />
-                        </div>
+                <UpdateModal isOpen={showUpdateModal} onClose={() => setShowUpdateModal(false)} />
+
+                <div className="login-content">
+                    <div className="login-header">
+
+                        <h1>Welcome Back</h1>
+                        <p>Please enter your details to sign in.</p>
                     </div>
 
-                    <div className="input-group">
-                        <label htmlFor="password">Password</label>
-                        <div className="input-wrapper">
-                            <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg>
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                id="password"
-                                placeholder="••••••••"
-                            />
-                            <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-                                {showPassword ? (
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                        <line x1="1" y1="1" x2="23" y2="23"></line>
-                                    </svg>
-                                ) : (
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                )}
+                    <form className="login-form" onSubmit={handleLogin}>
+                        <div className="input-group">
+                            <label htmlFor="username">Email Address</label>
+                            <div className="input-wrapper">
+                                <User className="input-icon" size={18} />
+                                <input type="text" id="username" placeholder="Enter your email" />
                             </div>
                         </div>
+
+                        <div className="input-group">
+                            <label htmlFor="password">Password</label>
+                            <div className="input-wrapper">
+                                <Lock className="input-icon" size={18} />
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password"
+                                    placeholder="••••••••"
+                                />
+                                <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="form-actions">
+                            <label className="checkbox-container">
+                                <input type="checkbox" />
+                                <span className="checkmark"></span>
+                                <span>Remember me</span>
+                            </label>
+                            <a href="#" className="forgot-password">Forgot password?</a>
+                        </div>
+
+                        <button type="submit" className="submit-btn" disabled={loading}>
+                            {loading ? (
+                                <span className="loading-spinner"></span>
+                            ) : (
+                                <>
+                                    Sign In <LogIn size={18} style={{ marginLeft: '8px' }} />
+                                </>
+                            )}
+                        </button>
+
+                        <div className="signup-text">
+                            Don't have an account? <Link to="/signup">Sign up for free</Link>
+                        </div>
+                    </form>
+
+                    <div className="support-section">
+                        <a href="#" className="support-link">
+                            <HelpCircle size={16} />
+                            <span>Need help logging in?</span>
+                        </a>
                     </div>
-
-                    <div className="form-actions">
-                        <label className="checkbox-container">
-                            <input type="checkbox" />
-                            <span>Remember me</span>
-                        </label>
-                        <a href="#" className="forgot-password">Forgot password?</a>
-                    </div>
-
-                    <button type="submit" className="submit-btn" disabled={loading}>
-                        {loading ? 'Signing In...' : 'Sign In'}
-                    </button>
-
-                    <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem', color: '#6b7280' }}>
-                        Don't have an account? <Link to="/signup" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>Sign up</Link>
-                    </div>
-                </form>
-
-                <div className="support-text">
-                    Need assistance? <a href="#">Contact Support</a>
                 </div>
             </div>
 
             {/* Right Side - Image & Branding */}
             <div className="login-right">
-                <div className="glass-card">
-                    <svg className="brand-icon" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 18h6"></path>
-                        <path d="M10 22h4"></path>
-                        <path d="M12 2v1"></path>
-                        <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"></path>
-                    </svg>
-                    <h2 className="brand-title">LAMPKONEK</h2>
-                    <p className="brand-slogan">Connecting Ministry, Impacting Lives.</p>
+                <div className="brand-logo">
+                    <img src="/logo/lamp.png" alt="Lampkonek Logo" />
                 </div>
-
                 <div className="right-footer">
-                    © 2024 MINISTRY MANAGEMENT SYSTEM
+                    © 2026 MINISTRY MANAGEMENT SYSTEM
                 </div>
+                <button
+                    className="update-icon-btn"
+                    onClick={() => setShowUpdateModal(true)}
+                    title="Updates & Version"
+                >
+                    <RefreshCw size={20} />
+                </button>
 
-                <div className="moon-icon-wrapper">
-                    <svg className="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                    </svg>
-                </div>
+                <button className="moon-icon-wrapper" aria-label="Toggle theme">
+                    <Moon size={20} />
+                </button>
             </div>
         </div>
     );

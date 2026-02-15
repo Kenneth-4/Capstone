@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.1.0</span>
+                            <span className="version-number">v1.2.0</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,22 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 15, 2026</span>
+                                <h4 className="update-title">Visual Overhaul & Branding Refresh ✨</h4>
+                                <p>We've completely modernized the authentication experience and dashboard branding with a sleek, premium design.</p>
+                                <ul className="feature-list">
+                                    <li>🎨 <strong>Modern Design:</strong> Login and Signup pages now feature a stunning glassmorphism design with a levitating logo animation.</li>
+                                    <li>⚡ <strong>Enhanced Branding:</strong> Integrated the official Lampkonek logo across the app, including the Dashboard sidebar.</li>
+                                    <li>📱 <strong>Responsive Layout:</strong> Improved split-screen layouts that adapt perfectly to any device size.</li>
+                                    <li>✨ <strong>Visual Polish:</strong> Replaced generic icons with modern "Lucide" icons and added smooth animations throughout.</li>
+                                    <li>🌚 <strong>Consistent Theming:</strong> Unified dark mode toggles and UI elements across all authentication screens.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 13, 2026</span>
                                 <h4 className="update-title">Reservation Management & Permission System Fix 🔧</h4>

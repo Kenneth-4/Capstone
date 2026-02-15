@@ -359,11 +359,9 @@ export const Dashboard = () => {
             {/* Sidebar */}
             <aside className="sidebar">
                 <div className="sidebar-header">
-                    <div className="logo-circle">
-                        {/* Placeholder for Lamp Logo */}
-                        <span style={{ color: '#10b981', fontSize: '24px' }}>⚡</span>
+                    <div className="sidebar-logo-container">
+                        <img src="/logo/lamp.png" alt="Lampkonek Logo" className="sidebar-logo" />
                     </div>
-                    <h2 className="sidebar-title">LAMPKONEK</h2>
                 </div>
 
                 <nav className="sidebar-nav">
