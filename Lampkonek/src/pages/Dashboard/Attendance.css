@@ -1,11 +1,12 @@
 /* src/pages/Dashboard/Attendance.css */
 
-.attendance-container {
+.attendance-content {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     font-family: 'Inter', sans-serif;
     animation: fadeIn 0.4s ease-out;
+    padding-bottom: 2rem;
 }
 
 @keyframes fadeIn {
@@ -20,419 +21,377 @@
     }
 }
 
-/* Header Actions */
-.header-actions {
+/* Header & Actions */
+.top-bar {
     display: flex;
-    gap: 0.75rem;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0px;
+    /* Reduced margin to connect closer to buttons if needed */
 }
 
-.export-btn,
-.checklist-btn,
-.take-attendance-btn {
+.page-title h1 {
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: #1f2937;
+    margin: 0;
+}
+
+.header-actions-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.action-buttons-group {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.btn-secondary {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.6rem 1rem;
+    background-color: white;
+    border: 1px solid #d1d5db;
+    /* Lighter border for secondary */
+    color: #6366f1;
+    /* Brand color text */
+    padding: 0.5rem 1rem;
     border-radius: 8px;
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.export-btn {
-    background-color: white;
-    border: 1px solid #e5e7eb;
-    color: #374151;
-}
-
-.export-btn:hover,
-.checklist-btn:hover {
+.btn-secondary:hover {
     background-color: #f9fafb;
-    border-color: #d1d5db;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-color: #9ca3af;
 }
 
-.take-attendance-btn {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
-}
-
-.take-attendance-btn:hover {
-    box-shadow: 0 6px 12px rgba(99, 102, 241, 0.3);
-    transform: translateY(-1px);
-}
-
-/* Table Card */
-.attendance-table-card {
-    background-color: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    border: 1px solid #f3f4f6;
-    overflow: hidden;
+.btn-primary {
     display: flex;
-    flex-direction: column;
-}
-
-/* Filters Section */
-.attendance-filters {
-    padding: 1.25rem 1.5rem;
-    background-color: white;
-    border-bottom: 1px solid #f3f4f6;
-}
-
-.controls-row {
-    display: flex;
-    gap: 1rem;
     align-items: center;
+    gap: 0.5rem;
+    background-color: #6366f1;
+    border: 1px solid #6366f1;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.4);
 }
 
-.filter-search {
-    flex: 1;
+.btn-primary:hover {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+/* Filters Bar */
+/* Visual tweak from image: Filters are inside a white rounded bar */
+.attendance-filters-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    flex-wrap: wrap;
+    gap: 1rem;
+    border: 1px solid #f3f4f6;
+}
+
+.search-wrapper {
     position: relative;
+    flex: 1;
     max-width: 400px;
 }
 
-.filter-search input {
-    width: 100%;
-    padding: 0.6rem 1rem 0.6rem 2.5rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    outline: none;
-    color: #1f2937;
-    transition: all 0.2s;
-    background-color: #f9fafb;
-}
-
-.filter-search input:focus {
-    background-color: white;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.filter-search svg {
+.search-icon {
     position: absolute;
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: #9ca3af;
-    pointer-events: none;
 }
 
-.filter-select-wrapper select,
-.filter-date input {
-    padding: 0.6rem 2rem 0.6rem 1rem;
+.search-wrapper input {
+    width: 100%;
+    padding: 0.5rem 1rem 0.5rem 2.5rem;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: 9999px;
+    /* Fully rounded as per image */
     font-size: 0.875rem;
-    color: #374151;
-    background-color: #f9fafb;
-    cursor: pointer;
-    transition: all 0.2s;
     outline: none;
+    transition: border-color 0.2s;
+    background-color: #fff;
 }
 
-.filter-select-wrapper select:focus,
-.filter-date input:focus {
-    background-color: white;
+.search-wrapper input:focus {
     border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
-.filter-icon-btn {
-    width: 38px;
-    height: 38px;
+.filters-right {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.date-filter,
+.event-filter {
     display: flex;
     align-items: center;
-    justify-content: center;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background-color: white;
-    color: #6b7280;
-    cursor: pointer;
-    transition: all 0.2s;
+    gap: 0.5rem;
 }
 
-.filter-icon-btn:hover {
-    border-color: #d1d5db;
-    background-color: #f9fafb;
+.date-filter label,
+.event-filter label {
+    font-size: 0.85rem;
+    color: #111827;
+    font-weight: 600;
+}
+
+.date-filter input,
+.event-filter select {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: #374151;
+    outline: none;
+    background-color: white;
+}
+
+/* Grid Layout */
+.attendance-grid {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr;
+    /* Adjust ratio 70/30 approx */
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .attendance-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Left Panel - Table Card */
+.table-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #f3f4f6;
+}
+
+.tabs-header {
+    display: flex;
+    gap: 0;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    margin-top: 0;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+}
+
+.tab-btn:hover {
     color: #374151;
 }
 
-/* Table Styles */
+.tab-btn.active {
+    color: #1f2937;
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #1f2937;
+    /* Dark underline like image */
+}
+
+/* Specific styling to match image tab box look if needed, but underline is cleaner */
+/* Image shows a box outline for active? No, looks like underline or just bold. */
+
 .attendance-table {
     width: 100%;
     border-collapse: collapse;
 }
 
+/* Image has no background on headers, just clean text */
 .attendance-table th {
     text-align: left;
     padding: 1rem 1.5rem;
     font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: 700;
     color: #6b7280;
-    background-color: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
+    /* lighter gray */
+    text-transform: uppercase;
+    background-color: white;
+    border-bottom: none;
+    /* Removed border as per image or kept minimal */
 }
 
 .attendance-table td {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #f3f4f6;
-    vertical-align: middle;
-    color: #374151;
+    padding: 1.25rem 1.5rem;
     font-size: 0.9rem;
-    transition: background-color 0.1s;
+    color: #374151;
+    border-top: 1px solid #f3f4f6;
+    vertical-align: middle;
 }
 
-.attendance-table tr:hover td {
-    background-color: #f9fafb;
+.attendance-table tr:first-child td {
+    border-top: 1px solid #f3f4f6;
 }
 
-.attendance-table tr:last-child td {
-    border-bottom: none;
-}
-
-/* User Cell & Avatar */
-.user-cell {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.avatar-circle {
-    width: 36px;
-    height: 36px;
+/* Status Indicators */
+.status-dot-indicator {
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85rem;
+    display: inline-block;
+}
+
+.status-dot-indicator.present {
+    background-color: #10b981;
+    /* Green */
+}
+
+.status-dot-indicator.absent {
+    background-color: #ef4444;
+    /* Red */
+}
+
+.status-text {
     font-weight: 600;
-    text-transform: uppercase;
-    border: 2px solid white;
-    box-shadow: 0 0 0 1px #e5e7eb;
+    color: #374151;
+    font-size: 0.8rem;
+    letter-spacing: 0.025em;
 }
 
-.avatar-purple {
-    background-color: #e0e7ff;
-    color: #4338ca;
+/* Legend Footer */
+.table-legend-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    gap: 1.5rem;
+    margin-top: auto;
+    /* Push to bottom */
 }
 
-.avatar-orange {
-    background-color: #ffedd5;
-    color: #9a3412;
-}
-
-.avatar-blue {
-    background-color: #dbeafe;
-    color: #1e40af;
-}
-
-.avatar-pink {
-    background-color: #fce7f3;
-    color: #9d174d;
-}
-
-.avatar-green {
-    background-color: #dcfce7;
-    color: #166534;
-}
-
-/* Status Pills */
-.status-pill {
-    display: inline-flex;
+.legend-item {
+    display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border: 1px solid transparent;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4b5563;
 }
 
-.pill-present {
-    background-color: #ecfdf5;
-    color: #047857;
-    border-color: #d1fae5;
-}
-
-.pill-absent {
-    background-color: #fef2f2;
-    color: #b91c1c;
-    border-color: #fee2e2;
-}
-
-.status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-}
-
-.dot-present {
-    background-color: #10b981;
-}
-
-.dot-absent {
-    background-color: #ef4444;
-}
-
-/* Action Buttons */
-.action-btn {
-    width: 32px;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    background: transparent;
-    color: #9ca3af;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.action-btn:hover {
-    background-color: #f3f4f6;
-    color: #6366f1;
-}
-
-/* Footer & Pagination */
-.table-footer {
+/* Right Panel - Charts */
+.attendance-right-panel {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-top: 1px solid #e5e7eb;
-    background-color: white;
-}
-
-.showing-text {
-    font-size: 0.875rem;
-    color: #6b7280;
-}
-
-.pagination-controls {
-    display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 1.5rem;
 }
 
-.per-page {
+.chart-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: #6b7280;
-}
-
-.per-page select {
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-    color: #374151;
-    outline: none;
-    cursor: pointer;
-}
-
-.page-numbers {
-    display: flex;
-    gap: 0.25rem;
-}
-
-.page-num,
-.page-nav-btn {
-    min-width: 32px;
-    height: 32px;
-    padding: 0 0.5rem;
-    display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    font-weight: 500;
+    border: 1px solid #f3f4f6;
+}
+
+.chart-card h3 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1rem;
     color: #6b7280;
-    background: transparent;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s;
 }
 
-.page-num:hover,
-.page-nav-btn:hover {
-    color: #111827;
-    background-color: #f3f4f6;
-}
+/* Print Styles */
+@media print {
+    body * {
+        visibility: hidden;
+    }
 
-.page-num.active {
-    background-color: #6366f1;
-    color: white;
-    box-shadow: 0 1px 2px rgba(99, 102, 241, 0.3);
-}
+    .attendance-content,
+    .attendance-content * {
+        visibility: visible;
+    }
 
-.page-nav-btn {
-    border: 1px solid #e5e7eb;
-}
+    .attendance-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+    }
 
-/* Summary Footer */
-.attendance-summary {
-    display: flex;
-    gap: 2rem;
-    padding: 0.75rem 1.5rem;
-    background-color: #f9fafb;
-    border-top: 1px solid #f3f4f6;
-    font-size: 0.875rem;
-}
+    /* Hide Controls */
+    .top-actions,
+    .attendance-filters-bar,
+    .action-buttons-group,
+    .header-actions-row,
+    .tabs-header,
+    .pagination-controls,
+    .table-footer {
+        display: none !important;
+    }
 
-.summary-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
+    /* Adjust Layout for Print */
+    .attendance-grid {
+        display: block;
+        /* Stack or just show table */
+    }
 
-.tooltip-container .tooltip-bubble {
-    visibility: hidden;
-    width: 250px;
-    background-color: #374151;
-    color: #fff;
-    text-align: center;
-    border-radius: 6px;
-    padding: 8px 12px;
-    position: absolute;
-    z-index: 1;
-    top: 125%;
-    /* Position below the icon */
-    left: 50%;
-    transform: translateX(-15%);
-    /* Adjust horizontal alignment */
-    opacity: 0;
-    transition: opacity 0.3s;
-    font-size: 0.75rem;
-    font-weight: 400;
-    line-height: 1.4;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
+    .attendance-right-panel {
+        display: none;
+        /* Hide charts in print if desired, or keep them. Often charts don't print well. Let's hide to focus on data table */
+    }
 
-.tooltip-container .tooltip-bubble::after {
-    content: "";
-    position: absolute;
-    bottom: 100%;
-    left: 17%;
-    margin-left: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: transparent transparent #374151 transparent;
-}
+    .attendance-left-panel {
+        width: 100%;
+    }
 
-.tooltip-container:hover .tooltip-bubble {
-    visibility: visible;
-    opacity: 1;
+    .table-card {
+        box-shadow: none;
+        border: none;
+    }
+
+    .attendance-table th,
+    .attendance-table td {
+        border: 1px solid #ddd;
+        /* Add borders for print readability */
+        padding: 0.5rem;
+    }
 }

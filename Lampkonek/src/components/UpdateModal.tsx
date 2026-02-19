@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.2.0</span>
+                            <span className="version-number">v1.3.0</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,23 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 19, 2026</span>
+                                <h4 className="update-title">Dashboard & Activity Enhancements 🚀</h4>
+                                <p>Major upgrades to the dashboard with real-time activity tracking, visual improvements to attendance and reservations, and enhanced security.</p>
+                                <ul className="feature-list">
+                                    <li>🕒 <strong>Recent Activity Timeline:</strong> A beautiful new timeline on the dashboard showing real-time member registrations, reservations, and attendance.</li>
+                                    <li>📅 <strong>Upcoming Services:</strong> Dedicated card view for approved upcoming events and services.</li>
+                                    <li>📊 <strong>Attendance Analytics:</strong> Completely redesigned Attendance page with "Trends" and "Onsite vs Online" charts.</li>
+                                    <li>🖨️ <strong>Export & Print:</strong> You can now export attendance data to CSV or print reports directly.</li>
+                                    <li>🛡️ <strong>Security Update:</strong> Signup flow now restricts "Admin" and "Pastor" role creation.</li>
+                                    <li>🎨 <strong>UI Polish:</strong> Refined icons, colors, and layout across the dashboard for a premium feel.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 15, 2026</span>
                                 <h4 className="update-title">Visual Overhaul & Branding Refresh ✨</h4>

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-    Moon,
     Plus,
     ChevronLeft,
     ChevronRight,
@@ -19,7 +18,6 @@ import {
 import './Reservation.css';
 import { NewReservationModal } from './NewReservationModal';
 import { RecurringEventsModal } from './RecurringEventsModal';
-import { UserProfile } from '../../components/UserProfile';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -306,14 +304,6 @@ export const Reservation = () => {
             <header className="top-bar">
                 <div className="page-title">
                     <h1>Reservation</h1>
-                </div>
-
-                <div className="top-actions">
-                    <button className="theme-toggle">
-                        <Moon size={20} />
-                    </button>
-
-                    <UserProfile />
                 </div>
             </header>
 

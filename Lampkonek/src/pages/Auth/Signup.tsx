@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import UpdateModal from '../../components/UpdateModal';
-import { User, Mail, Lock, Eye, EyeOff, RefreshCw, Briefcase, BadgeCheck, Moon } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, RefreshCw, Briefcase, BadgeCheck } from 'lucide-react';
 import './Signup.css';
 
 export const Signup = () => {
@@ -33,7 +33,13 @@ export const Signup = () => {
                     .order('name');
 
                 if (error) throw error;
-                setRoles(data || []);
+
+                // Filter out Admin and Pastor from signup options
+                const filteredRoles = (data || []).filter(role =>
+                    !['Admin', 'Pastor'].includes(role.name)
+                );
+
+                setRoles(filteredRoles);
             } catch (error) {
                 console.error('Error fetching roles:', error);
                 // Fallback to default roles if fetch fails
@@ -122,6 +128,7 @@ export const Signup = () => {
 
             {/* Right Side - Form */}
             <div className="signup-right">
+
                 <button
                     className="update-icon-btn"
                     onClick={() => setShowUpdateModal(true)}
@@ -130,9 +137,7 @@ export const Signup = () => {
                     <RefreshCw size={20} />
                 </button>
                 <UpdateModal isOpen={showUpdateModal} onClose={() => setShowUpdateModal(false)} />
-                <button className="moon-icon-wrapper" aria-label="Toggle theme">
-                    <Moon size={20} />
-                </button>
+
 
                 <div className="signup-content">
                     <div className="signup-header">

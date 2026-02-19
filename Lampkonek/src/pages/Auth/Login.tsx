@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import UpdateModal from '../../components/UpdateModal';
-import { User, Lock, Eye, EyeOff, RefreshCw, HelpCircle, Moon, LogIn } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, RefreshCw, HelpCircle, LogIn } from 'lucide-react';
 import './Login.css';
 
 export const Login = () => {
@@ -122,18 +122,15 @@ export const Login = () => {
                 <div className="right-footer">
                     © 2026 MINISTRY MANAGEMENT SYSTEM
                 </div>
-                <button
-                    className="update-icon-btn"
-                    onClick={() => setShowUpdateModal(true)}
-                    title="Updates & Version"
-                >
-                    <RefreshCw size={20} />
-                </button>
-
-                <button className="moon-icon-wrapper" aria-label="Toggle theme">
-                    <Moon size={20} />
-                </button>
             </div>
+
+            <button
+                className="update-icon-btn"
+                onClick={() => setShowUpdateModal(true)}
+                title="Updates & Version"
+            >
+                <RefreshCw size={20} />
+            </button>
         </div>
     );
 };

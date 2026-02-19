@@ -2,31 +2,26 @@ import {
     Download,
     Plus,
     Search,
-    Filter,
-    ChevronLeft,
-    ChevronRight,
-
-    Moon,
-    CheckSquare,
-    Info,
+    Printer,
+    Link as LinkIcon,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
-import toast from 'react-hot-toast';
 import { TakeAttendanceModal } from './TakeAttendanceModal';
 import { AttendanceChecklistModal } from './AttendanceChecklistModal';
 import { AddAttendanceModal } from './AddAttendanceModal';
-import { UserProfile } from '../../components/UserProfile';
 import { initializeRecurringEvents } from '../../utils/initializeRecurringEvents';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 import './Attendance.css';
+import { UserProfile } from '../../components/UserProfile';
 
 interface AttendanceRecord {
-    id: string; // or number depending on DB
+    id: string;
     user_id: string;
     date: string;
     event: string;
     status: string;
-    cluster: string; // derived from profile
+    cluster: string;
     profiles?: {
         full_name: string;
         cluster: string;
@@ -36,30 +31,12 @@ interface AttendanceRecord {
 }
 
 // Helper to generate consistent colors based on string
-const getAvatarColor = (name: string) => {
-    const colors = ['avatar-purple', 'avatar-orange', 'avatar-blue', 'avatar-pink', 'avatar-green'];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
-};
-
-const getInitials = (name: string) => {
-    return name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase()
-        .substring(0, 2);
-};
 
 export const Attendance = () => {
-    const [isTakeAttendanceOpen, setIsTakeAttendanceOpen] = useState(false); // Likely unused based on analysis, but keeping for safety
+    const [isTakeAttendanceOpen, setIsTakeAttendanceOpen] = useState(false);
     const [isChecklistOpen, setIsChecklistOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const hasRunAutomation = useState(false); // Using state ref to prevent re-runs in same mount
-
+    const hasRunAutomation = useState(false);
 
     // State for data
     const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
@@ -68,12 +45,12 @@ export const Attendance = () => {
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedEvent, setSelectedEvent] = useState('All Events');
-    const [selectedDate, setSelectedDate] = useState('');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
     const [eventsList, setEventsList] = useState<string[]>([]);
+    const [activeTab, setActiveTab] = useState<'All' | 'Onsite' | 'Online'>('Onsite');
 
     // Pagination State
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -96,12 +73,10 @@ export const Attendance = () => {
 
                 let allEventTitles: string[] = [];
 
-                // Add reservation event titles
                 if (reservationsData) {
                     allEventTitles = reservationsData.map((item: any) => item.event_title);
                 }
 
-                // Add recurring event titles
                 if (settingsData?.value) {
                     const recurringEvents: any[] = JSON.parse(settingsData.value);
                     const recurringTitles = recurringEvents
@@ -110,7 +85,6 @@ export const Attendance = () => {
                     allEventTitles = [...allEventTitles, ...recurringTitles];
                 }
 
-                // Remove duplicates
                 const uniqueTitles = Array.from(new Set(allEventTitles));
                 setEventsList(uniqueTitles);
             } catch (error) {
@@ -132,7 +106,6 @@ export const Attendance = () => {
     // Automatic Absence Marking Logic
     const processAutomaticAbsences = async () => {
         try {
-            // 1. Get Recurring Settings
             const { data: settingsData } = await supabase
                 .from('app_settings')
                 .select('value')
@@ -144,15 +117,10 @@ export const Attendance = () => {
             const enabledEvents = recurringEvents.filter(e => e.enabled);
             if (enabledEvents.length === 0) return;
 
-            // 2. Get All Members
-            const { data: members } = await supabase
-                .from('profiles')
-                .select('id');
-
+            const { data: members } = await supabase.from('profiles').select('id');
             if (!members || members.length === 0) return;
             const allMemberIds = new Set(members.map(m => m.id));
 
-            // 3. Check Last 7 Days (INCLUDING today if event has ended)
             const today = new Date();
             const currentHours = today.getHours();
             const currentMinutes = today.getMinutes();
@@ -163,19 +131,15 @@ export const Attendance = () => {
                 checkDate.setDate(today.getDate() - i);
                 const dayOfWeek = checkDate.getDay();
                 const dateStr = checkDate.toISOString().split('T')[0];
-
-                // Find events for this day
                 const eventsForDay = enabledEvents.filter(e => e.dayOfWeek === dayOfWeek);
 
                 for (const event of eventsForDay) {
-                    // Specific check for Today: Only process if event has ended
                     if (i === 0) {
                         const [endHour, endMinute] = event.endTime.split(':').map(Number);
                         if (currentHours < endHour || (currentHours === endHour && currentMinutes < endMinute)) {
-                            continue; // Event hasn't ended yet
+                            continue;
                         }
                     }
-                    // Check attendance for this specific date and event
                     const { data: existingRecords } = await supabase
                         .from('attendance')
                         .select('user_id')
@@ -183,8 +147,6 @@ export const Attendance = () => {
                         .eq('event', event.title);
 
                     const presentUserIds = new Set(existingRecords?.map(r => r.user_id) || []);
-
-                    // Identify absent members
                     const absentRecords: any[] = [];
                     allMemberIds.forEach(id => {
                         if (!presentUserIds.has(id)) {
@@ -198,32 +160,19 @@ export const Attendance = () => {
                         }
                     });
 
-                    // Bulk Insert Absences
                     if (absentRecords.length > 0) {
-                        const { error } = await supabase
-                            .from('attendance')
-                            .insert(absentRecords);
-
-                        if (error) {
-                            console.error(`Error auto-marking absences for ${event.title} on ${dateStr}:`, error);
-                        } else {
-                            console.log(`Auto-marked ${absentRecords.length} absences for ${event.title} on ${dateStr}`);
-                        }
+                        await supabase.from('attendance').insert(absentRecords);
                     }
                 }
             }
-            // Refresh list if we added anything (optional, but good for UX if looking at past dates)
             fetchAttendance();
-
         } catch (error) {
             console.error('Error processing automatic absences:', error);
         }
     };
 
-    // Automatic Status Tagging Logic
     const processMemberStatus = async () => {
         try {
-            // 1. Get Recurring Settings
             const { data: settingsData } = await supabase
                 .from('app_settings')
                 .select('value')
@@ -235,30 +184,24 @@ export const Attendance = () => {
             const enabledEvents = recurringEvents.filter(e => e.enabled);
             if (enabledEvents.length === 0) return;
 
-            // 2. Define Time Range (Start of Month to Now)
             const today = new Date();
             const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
             const currentHours = today.getHours();
             const currentMinutes = today.getMinutes();
 
-            // 3. Calculate Expected Attendance Events (Occurrences So Far)
             let expectedEventCount = 0;
             const eventTitles = new Set();
 
-            // Loop through each day from start of month to today
             for (let d = new Date(startOfMonth); d <= today; d.setDate(d.getDate() + 1)) {
                 const dayOfWeek = d.getDay();
                 const isToday = d.toDateString() === today.toDateString();
-
-                // Check matches for this day
                 const daysEvents = enabledEvents.filter(e => e.dayOfWeek === dayOfWeek);
 
                 for (const event of daysEvents) {
-                    // If it's today, check if it has ended
                     if (isToday) {
                         const [endHour, endMinute] = event.endTime.split(':').map(Number);
                         if (currentHours < endHour || (currentHours === endHour && currentMinutes < endMinute)) {
-                            continue; // Haven't finished yet, don't count as expected
+                            continue;
                         }
                     }
                     expectedEventCount++;
@@ -266,14 +209,11 @@ export const Attendance = () => {
                 }
             }
 
-            if (expectedEventCount === 0) return; // No events yet this month, don't change status
+            if (expectedEventCount === 0) return;
 
-            // 4. Get Attendance Stats for All Members
-            // Get all members
             const { data: members } = await supabase.from('profiles').select('id, status');
             if (!members) return;
 
-            // Get all 'Present' attendance for recurring events in this month
             const { data: attendance } = await supabase
                 .from('attendance')
                 .select('user_id')
@@ -282,7 +222,7 @@ export const Attendance = () => {
                 .lte('date', today.toISOString().split('T')[0])
                 .in('event', Array.from(eventTitles));
 
-            const attendanceMap = new Map(); // userId -> presentCount
+            const attendanceMap = new Map();
             if (attendance) {
                 attendance.forEach((rec: any) => {
                     const current = attendanceMap.get(rec.user_id) || 0;
@@ -290,71 +230,48 @@ export const Attendance = () => {
                 });
             }
 
-            // 5. Update Status
             for (const member of members) {
                 const presentCount = attendanceMap.get(member.id) || 0;
-                let newStatus = member.status; // Default keep same
+                let newStatus = member.status;
+                if (presentCount === expectedEventCount) newStatus = 'Active';
+                else if (presentCount === 0) newStatus = 'Inactive';
+                else newStatus = 'Semi Active';
 
-                // Apply Logic
-                if (presentCount === expectedEventCount) {
-                    newStatus = 'Active';
-                } else if (presentCount === 0) {
-                    newStatus = 'Inactive';
-                } else {
-                    newStatus = 'Semi Active';
-                }
-
-                // Only update if changed and not a special status (optional, but requested logic implies strict mapping)
-                // Assuming we overwrite 'Active', 'Inactive', 'Semi Active'. 
-                // We should probably respect 'Deceased' or 'Transferred' if they are manually set flags that shouldn't change?
-                // For now, I'll update all to follow the rule: "No attendance for whole month = Inactive" etc.
-                // But let's exclude 'Deceased' just in case.
                 if (member.status === 'Deceased' || member.status === 'Transferred') continue;
-
                 if (newStatus !== member.status) {
                     await supabase.from('profiles').update({ status: newStatus }).eq('id', member.id);
                 }
             }
-            console.log('Member status updates completed.');
-
         } catch (error) {
             console.error('Error processing member status:', error);
         }
     };
 
-    // Fetch data
     const fetchAttendance = async () => {
         try {
             setLoading(true);
-
-            // Build query
-            // Join with profiles using user_id foreign key
             let query = supabase
                 .from('attendance')
-                .select(`
-                    *,
-                    profiles:user_id (*)
-                `)
+                .select(`*, profiles:user_id (*)`)
                 .order('date', { ascending: false });
 
             if (selectedEvent !== 'All Events') {
                 query = query.eq('event', selectedEvent);
             }
 
-            if (selectedDate) {
-                query = query.eq('date', selectedDate);
+            if (dateFrom) {
+                query = query.gte('date', dateFrom);
+            }
+            if (dateTo) {
+                query = query.lte('date', dateTo);
             }
 
             const { data, error } = await query;
-
             if (error) throw error;
-
-            console.log('Attendance Records Fetched:', data);
 
             if (data) {
                 const mappedData = data.map((record: any) => ({
                     ...record,
-                    // Handle profiles being an object or array (Supabase returns object for many-to-one)
                     profiles: Array.isArray(record.profiles) ? record.profiles[0] : record.profiles,
                     cluster: (Array.isArray(record.profiles) ? record.profiles[0]?.cluster : record.profiles?.cluster) || 'Unassigned',
                 }));
@@ -362,7 +279,6 @@ export const Attendance = () => {
             }
         } catch (error: any) {
             console.error('Error fetching attendance:', error);
-            toast.error(error.message || 'Failed to load attendance records');
         } finally {
             setLoading(false);
         }
@@ -370,248 +286,308 @@ export const Attendance = () => {
 
     useEffect(() => {
         fetchAttendance();
-    }, [selectedEvent, selectedDate, isChecklistOpen, isAddModalOpen]);
+    }, [selectedEvent, dateFrom, dateTo, isChecklistOpen, isAddModalOpen]);
 
-    // Computed Logic for Pagination
+    // Computed Logic for Pagination & Filtering
     const filteredRecords = attendanceRecords.filter(item => {
         if (!item.profiles) return false;
-        return item.profiles.full_name.toLowerCase().includes(searchTerm.toLowerCase());
+        // Search Filter
+        const matchesSearch = item.profiles.full_name.toLowerCase().includes(searchTerm.toLowerCase());
+
+        // Tab Filter
+        let matchesTab = true;
+        if (activeTab === 'Onsite') {
+            matchesTab = !item.event.toLowerCase().includes('online'); // Assume not online = onsite
+        } else if (activeTab === 'Online') {
+            matchesTab = item.event.toLowerCase().includes('online');
+        }
+
+        return matchesSearch && matchesTab;
     });
+    const currentItems = filteredRecords.slice(0, 50);
 
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredRecords.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+    // Chart Data Preparation
+    const monthlyAttendanceData = useMemo(() => {
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const data = months.map(m => ({ name: m, attendance: 0 }));
 
-    const handlePageChange = (pageNumber: number) => {
-        setCurrentPage(pageNumber);
+        attendanceRecords.forEach(record => {
+            if (record.status === 'Present') {
+                const date = new Date(record.date);
+                if (!isNaN(date.getTime())) {
+                    const monthIndex = date.getMonth();
+                    data[monthIndex].attendance += 1;
+                }
+            }
+        });
+        return data;
+    }, [attendanceRecords]);
+
+    const onsiteVsOnlineData = useMemo(() => {
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const data = months.map(m => ({ name: m, Onsite: 0, Online: 0 }));
+
+        attendanceRecords.forEach(record => {
+            if (record.status === 'Present') {
+                const date = new Date(record.date);
+                if (!isNaN(date.getTime())) {
+                    const monthIndex = date.getMonth();
+                    const isOnline = record.event.toLowerCase().includes('online');
+                    if (isOnline) {
+                        data[monthIndex].Online += 1;
+                    } else {
+                        data[monthIndex].Onsite += 1;
+                    }
+                }
+            }
+        });
+        return data;
+    }, [attendanceRecords]);
+
+    // Counts for Tabs
+    const counts = useMemo(() => {
+        const all = attendanceRecords.length;
+        const online = attendanceRecords.filter(r => r.event.toLowerCase().includes('online')).length;
+        const onsite = all - online;
+        return { all, online, onsite };
+    }, [attendanceRecords]);
+
+    const handleExport = () => {
+        const headers = ["Name", "Status", "Cluster", "Event", "Date", "Remarks"];
+        const csvData = filteredRecords.map(record => [
+            record.profiles?.full_name || 'Unknown',
+            record.status,
+            record.cluster,
+            record.event,
+            new Date(record.date).toLocaleDateString(),
+            record.remarks || ''
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'attendance_report.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
-    const getPaginationGroup = () => {
-        let start = Math.floor((currentPage - 1) / 5) * 5;
-        return new Array(Math.min(5, totalPages - start)).fill(0).map((_, idx) => start + idx + 1);
+    const handlePrint = () => {
+        window.print();
     };
-
 
     return (
         <div className="attendance-content">
             {/* Header */}
             <header className="top-bar">
                 <div className="page-title">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <h1>Attendance</h1>
-                        <div className="tooltip-container" style={{ position: 'relative', display: 'flex' }}>
-                            <div className="info-icon" style={{ cursor: 'help', color: '#9ca3af' }}>
-                                <Info size={18} />
-                            </div>
-                            <div className="tooltip-bubble" style={{ minWidth: '320px', textAlign: 'left' }}>
-                                <strong>Automation Active:</strong><br />
-                                • Absences are auto-marked when recurring events end.<br />
-                                • Member Status is auto-updated based on monthly attendance:<br />
-                                &nbsp;&nbsp;- <span style={{ color: '#10b981' }}>Active:</span> Complete attendance<br />
-                                &nbsp;&nbsp;- <span style={{ color: '#f59e0b' }}>Semi Active:</span> Partial attendance<br />
-                                &nbsp;&nbsp;- <span style={{ color: '#ef4444' }}>Inactive:</span> No attendance
-                            </div>
-                        </div>
-                    </div>
+                    <h1>Attendance</h1>
                 </div>
 
                 <div className="top-actions">
-                    <button className="theme-toggle">
-                        <Moon size={20} />
-                    </button>
-
                     <UserProfile />
                 </div>
             </header>
-
-            <div className="attendance-container">
-                {/* Actions & Filters */}
-                <div className="header-actions" style={{ justifyContent: 'flex-end', marginBottom: '-0.5rem', gap: '0.75rem' }}>
-                    <button className="export-btn">
-                        <Download size={16} />
-                        Export CSV
+            <div className="header-actions-row">
+                <div style={{ flex: 1 }}></div> {/* Spacer */}
+                <div className="action-buttons-group">
+                    <button className="btn-secondary" onClick={() => setIsAddModalOpen(true)}>
+                        <Plus size={16} /> Add Onsite
                     </button>
-                    <button className="checklist-btn" onClick={() => setIsChecklistOpen(true)} style={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', color: '#374151', padding: '0.65rem 1rem', borderRadius: '8px', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <CheckSquare size={16} />
-                        Checklist
+                    <button className="btn-secondary" onClick={() => setIsAddModalOpen(true)}>
+                        <Plus size={16} /> Add Online
                     </button>
-                    <button className="take-attendance-btn" onClick={() => setIsAddModalOpen(true)}>
-                        <Plus size={16} />
-                        Take Attendance
+                    <button className="btn-secondary">
+                        <LinkIcon size={16} /> Form Link
+                    </button>
+                    <button className="btn-primary export-btn" onClick={handleExport}>
+                        <Download size={16} /> Export
+                    </button>
+                    <button className="btn-secondary" onClick={handlePrint}>
+                        <Printer size={16} /> Print
                     </button>
                 </div>
+            </div>
 
-                <div className="attendance-table-card">
-                    {/* Filter Row inside card like standard lists sometimes, or separate. Image shows controls above table. 
-                        Wait, Image shows controls in a white bar. Let's put them in a container above table.
-                    */}
-                    <div className="attendance-filters" style={{ borderBottom: '1px solid #f3f4f6', borderRadius: '12px 12px 0 0' }}>
-                        <div className="controls-row">
-                            <div className="filter-search">
-                                <Search size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="Search by name..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
+            {/* Filters Bar */}
+            <div className="attendance-filters-bar">
+                <div className="search-wrapper">
+                    <Search className="search-icon" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <div className="filters-right">
+                    <div className="date-filter">
+                        <label>Date From:</label>
+                        <input
+                            type="date"
+                            value={dateFrom}
+                            onChange={(e) => setDateFrom(e.target.value)}
+                            placeholder="mm/dd/yyyy"
+                        />
+                    </div>
+                    <div className="date-filter">
+                        <label>To:</label>
+                        <input
+                            type="date"
+                            value={dateTo}
+                            onChange={(e) => setDateTo(e.target.value)}
+                            placeholder="mm/dd/yyyy"
+                        />
+                    </div>
+                    <div className="event-filter">
+                        <label>Event</label>
+                        <select
+                            value={selectedEvent}
+                            onChange={(e) => setSelectedEvent(e.target.value)}
+                        >
+                            <option>All Events</option>
+                            {eventsList.map((event, index) => (
+                                <option key={index} value={event}>{event}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-                            <div className="filter-select-wrapper">
-                                <select
-                                    className="filter-select-input"
-                                    value={selectedEvent}
-                                    onChange={(e) => setSelectedEvent(e.target.value)}
-                                >
-                                    <option>All Events</option>
-                                    {eventsList.map((event, index) => (
-                                        <option key={index} value={event}>{event}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="filter-date">
-                                <input
-                                    type="date"
-                                    value={selectedDate}
-                                    onChange={(e) => setSelectedDate(e.target.value)}
-                                    placeholder="mm/dd/yyyy"
-                                    className="filter-date-input"
-                                    style={{ border: 'none', outline: 'none', background: 'transparent' }}
-                                />
-                            </div>
-
-                            <button className="filter-icon-btn">
-                                <Filter size={18} />
+            <div className="attendance-grid">
+                {/* LEFT COLUMN: Table */}
+                <div className="attendance-left-panel">
+                    <div className="table-card">
+                        {/* Tabs */}
+                        <div className="tabs-header">
+                            <button
+                                className={`tab-btn ${activeTab === 'All' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('All')}
+                            >
+                                All ({counts.all})
+                            </button>
+                            <button
+                                className={`tab-btn ${activeTab === 'Onsite' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('Onsite')}
+                            >
+                                Onsite ({counts.onsite})
+                            </button>
+                            <button
+                                className={`tab-btn ${activeTab === 'Online' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('Online')}
+                            >
+                                Online ({counts.online})
                             </button>
                         </div>
-                    </div>
 
-                    <table className="attendance-table">
-                        <thead>
-                            <tr>
-                                <th>NAME</th>
-                                <th>STATUS</th>
-                                <th>CLUSTER</th>
-                                <th>EVENT</th>
-
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentItems.map((item) => {
-                                const fullName = item.profiles?.full_name || 'Unknown';
-                                const initials = getInitials(fullName);
-                                const avatarColor = getAvatarColor(fullName);
-
-                                return (
-                                    <tr key={item.id}>
-                                        <td>
-                                            <div className="user-cell">
-                                                <div className={`avatar - circle ${avatarColor}`}>
-                                                    {item.profiles?.avatar_url ? (
-                                                        <img src={item.profiles.avatar_url} alt={initials} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                                                    ) : (
-                                                        initials
-                                                    )}
-                                                </div>
-                                                <span style={{ fontWeight: 600 }}>{fullName}</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span className={`status - pill ${item.status === 'Present' ? 'pill-present' : 'pill-absent'}`}>
-                                                <span className={`status - dot ${item.status === 'Present' ? 'dot-present' : 'dot-absent'}`}></span>
-                                                {item.status.toUpperCase()}
-                                            </span>
-                                        </td>
-                                        <td>{item.cluster}</td>
-                                        <td>{item.event}</td>
-
+                        {/* Table */}
+                        <div className="table-responsive">
+                            <table className="attendance-table">
+                                <thead>
+                                    <tr>
+                                        <th>NAME</th>
+                                        <th>STATUS</th>
+                                        <th>CLUSTER</th>
+                                        <th>EVENT</th>
                                     </tr>
-                                );
-                            })}
-                            {attendanceRecords.length === 0 && !loading && (
-                                <tr>
-                                    <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>
-                                        No attendance records found.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-
-                    {/* Footer */}
-                    <div className="table-footer">
-                        <div className="showing-text">
-                            Showing {filteredRecords.length > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, filteredRecords.length)} of {filteredRecords.length} entries
+                                </thead>
+                                <tbody>
+                                    {currentItems.map((item) => {
+                                        const fullName = item.profiles?.full_name || 'Unknown';
+                                        return (
+                                            <tr key={item.id}>
+                                                <td style={{ fontWeight: 500 }}>{fullName}</td>
+                                                <td>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        <span className={`status-dot-indicator ${item.status === 'Present' ? 'present' : 'absent'}`}></span>
+                                                        <span className="status-text">{item.status.toUpperCase()}</span>
+                                                    </div>
+                                                </td>
+                                                <td>{item.cluster}</td>
+                                                <td>{item.event}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {currentItems.length === 0 && !loading && (
+                                        <tr>
+                                            <td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                                                No records found.
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {loading && (
+                                        <tr>
+                                            <td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                                                Loading...
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
 
-                        <div className="pagination-controls">
-                            <div className="per-page">
-                                <span>Per Page</span>
-                                <select
-                                    value={itemsPerPage}
-                                    onChange={(e) => {
-                                        setItemsPerPage(Number(e.target.value));
-                                        setCurrentPage(1);
-                                    }}
-                                >
-                                    <option value={10}>10</option>
-                                    <option value={20}>20</option>
-                                    <option value={50}>50</option>
-                                </select>
+                        {/* Legend / Footer */}
+                        <div className="table-legend-footer">
+                            <div className="legend-item">
+                                <span className="status-dot-indicator present"></span>
+                                <span>Present: {currentItems.filter(i => i.status === 'Present').length}</span>
                             </div>
-
-                            <div className="page-numbers">
-                                <button
-                                    className="page-nav-btn"
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeft size={16} />
-                                </button>
-
-                                {getPaginationGroup().map((item, index) => (
-                                    <button
-                                        key={index}
-                                        className={`page-num ${currentPage === item ? 'active' : ''}`}
-                                        onClick={() => handlePageChange(item)}
-                                    >
-                                        {item}
-                                    </button>
-                                ))}
-
-                                {totalPages > 5 && (Math.floor((currentPage - 1) / 5) * 5) + 5 < totalPages && (
-                                    <span style={{ padding: '0 0.25rem', display: 'flex', alignItems: 'center', color: '#9ca3af' }}>...</span>
-                                )}
-
-                                <button
-                                    className="page-nav-btn"
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage === totalPages || totalPages === 0}
-                                >
-                                    <ChevronRight size={16} />
-                                </button>
+                            <div className="legend-item">
+                                <span className="status-dot-indicator absent"></span>
+                                <span>Absent: {currentItems.filter(i => i.status === 'Absent').length}</span>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Summary Footer */}
-                    <div className="attendance-summary">
-                        <div className="summary-item">
-                            <span className="summary-dot dot-present"></span>
-                            <span>Present ({attendanceRecords.filter(r => r.status === 'Present').length})</span>
+                {/* RIGHT COLUMN: Charts */}
+                <div className="attendance-right-panel">
+                    {/* Monthly Attendance Chart */}
+                    <div className="chart-card">
+                        <h3>Monthly Attendance</h3>
+                        <div style={{ width: '100%', height: 200 }}>
+                            <ResponsiveContainer>
+                                <BarChart data={monthlyAttendanceData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} />
+                                    <RechartsTooltip cursor={{ fill: 'transparent' }} />
+                                    <Bar dataKey="attendance" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={20} />
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
-                        <div className="summary-item">
-                            <span className="summary-dot dot-absent"></span>
-                            <span>Absent ({attendanceRecords.filter(r => r.status === 'Absent').length})</span>
+                    </div>
+
+                    {/* Onsite vs Online Chart */}
+                    <div className="chart-card">
+                        <h3>Onsite vs Online</h3>
+                        <div style={{ width: '100%', height: 200 }}>
+                            <ResponsiveContainer>
+                                <LineChart data={onsiteVsOnlineData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} />
+                                    <RechartsTooltip />
+                                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                                    <Line type="monotone" dataKey="Online" stroke="#6366f1" strokeWidth={2} dot={{ r: 3, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 5 }} />
+                                    <Line type="monotone" dataKey="Onsite" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 5 }} />
+                                </LineChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
                 </div>
             </div>
+
             <TakeAttendanceModal isOpen={isTakeAttendanceOpen} onClose={() => setIsTakeAttendanceOpen(false)} />
             <AttendanceChecklistModal isOpen={isChecklistOpen} onClose={() => setIsChecklistOpen(false)} />
             <AddAttendanceModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
-        </div >
+        </div>
     );
 };

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, User, Calendar, BarChart, Settings, LogOut, UserCircle, Moon, CheckSquare, Clock, Activity, UserPlus, TrendingUp, Bell, X } from 'lucide-react';
+import { LayoutDashboard, Users, User, Calendar, BarChart, Settings, LogOut, UserCircle, CheckSquare, Clock, Activity, UserPlus, TrendingUp, Bell, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -12,7 +12,6 @@ import { Reports } from './Reports';
 import { MemberReport } from './MemberReport';
 import { Settings as SettingsPage } from './Settings';
 import { MyProfile } from './MyProfile';
-import { UserProfile } from '../../components/UserProfile';
 import { useAuth } from '../../context/AuthContext';
 
 
@@ -38,6 +37,51 @@ interface MemberStatusChartData {
     color: string;
 }
 
+interface RecentActivity {
+    id: string;
+    type: 'Member' | 'Reservation' | 'Attendance';
+    title: string;
+    description: string;
+    timestamp: string;
+}
+
+interface UpcomingService {
+    id: string;
+    title: string;
+    date: string; // YYYY-MM-DD
+    time: string;
+    location: string;
+}
+
+const timeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " years ago";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " months ago";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " days ago";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " hours ago";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " minutes ago";
+    return Math.floor(seconds) + " seconds ago";
+};
+
+// Helper to format time
+const formatTime = (timeStr: string) => {
+    if (!timeStr) return '';
+    const [hours, minutes] = timeStr.split(':');
+    const date = new Date();
+    date.setHours(parseInt(hours), parseInt(minutes));
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+};
+
+
+
 export const Dashboard = () => {
     const navigate = useNavigate();
     const { profile, loading } = useAuth();
@@ -57,6 +101,9 @@ export const Dashboard = () => {
     });
     const [isLoadingStats, setIsLoadingStats] = useState(true);
     const [latestAnnouncement, setLatestAnnouncement] = useState<{ title: string } | null>(null);
+    const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+    const [upcomingServices, setUpcomingServices] = useState<UpcomingService[]>([]);
+
 
     // Chart data state
     const [attendanceData, setAttendanceData] = useState<AttendanceChartData[]>([]);
@@ -181,6 +228,71 @@ export const Dashboard = () => {
                     pendingReservations: pendingReservations || 0,
                     attendanceThisWeek: attendanceThisWeek || 0
                 });
+
+                // Fetch Recent Activity (New Members & Reservations)
+                const { data: recentMembers } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(3);
+
+                const { data: recentReservations } = await supabase
+                    .from('reservations')
+                    .select('id, event_title, created_at, event_type')
+                    .order('created_at', { ascending: false })
+                    .limit(3);
+
+                const activities: RecentActivity[] = [];
+
+                if (recentMembers) {
+                    recentMembers.forEach((m: any) => {
+                        activities.push({
+                            id: m.id,
+                            type: 'Member',
+                            title: 'New member registered',
+                            description: m.full_name || 'New Member',
+                            timestamp: m.created_at
+                        });
+                    });
+                }
+
+                if (recentReservations) {
+                    recentReservations.forEach((r: any) => {
+                        activities.push({
+                            id: r.id,
+                            type: 'Reservation',
+                            title: 'Venue reserved',
+                            description: r.event_title || 'Reservation',
+                            timestamp: r.created_at
+                        });
+                    });
+                }
+
+                // Sort by timestamp desc and take top 5
+                activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+                setRecentActivity(activities.slice(0, 5));
+
+                // Fetch Upcoming Services (Approved Reservations)
+                const { data: upcoming } = await supabase
+                    .from('reservations')
+                    .select('*')
+                    .eq('status', 'APPROVED')
+                    .gte('event_date', new Date().toISOString().split('T')[0])
+                    .order('event_date', { ascending: true })
+                    .limit(4);
+
+                if (upcoming) {
+                    const services: UpcomingService[] = upcoming.map((u: any) => ({
+                        id: u.id,
+                        title: u.event_title || 'Event',
+                        date: u.event_date,
+                        time: u.start_time ? `${formatTime(u.start_time)}` : 'TBD',
+                        location: u.venue || 'Main Hall'
+                    }));
+                    setUpcomingServices(services);
+                }
+
+
             } catch (error) {
                 console.error('Error fetching dashboard stats:', error);
                 toast.error('Failed to load dashboard statistics');
@@ -448,14 +560,6 @@ export const Dashboard = () => {
                                 <h1>Dashboard</h1>
 
                             </div>
-
-                            <div className="top-actions">
-                                <button className="theme-toggle">
-                                    <Moon size={20} />
-                                </button>
-
-                                <UserProfile />
-                            </div>
                         </header>
 
                         {/* Announcement Banner */}
@@ -569,6 +673,7 @@ export const Dashboard = () => {
 
                         {/* Charts Section */}
                         <div className="charts-section">
+                            {/* ... existing chart code ... */}
                             {/* Line Chart */}
                             <div className="chart-card">
                                 <div className="chart-header">
@@ -660,6 +765,81 @@ export const Dashboard = () => {
                                         </div>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+
+                        {/* Recent Activity & Upcoming Services */}
+                        <div className="tables-section">
+                            {/* Recent Activity */}
+                            <div className="activity-card">
+                                <h3>Recent Activity</h3>
+                                <div className="activity-list">
+                                    {recentActivity.length === 0 ? (
+                                        <div className="empty-state">No recent activity</div>
+                                    ) : (
+                                        recentActivity.map((item, index) => {
+                                            let Icon = Activity;
+                                            let iconColor = 'bg-blue-100 text-blue-600';
+
+                                            if (item.type === 'Member') {
+                                                Icon = UserPlus;
+                                                iconColor = 'bg-green-100 text-green-600';
+                                            } else if (item.type === 'Reservation') {
+                                                Icon = Calendar;
+                                                iconColor = 'bg-purple-100 text-purple-600';
+                                            } else if (item.type === 'Attendance') {
+                                                Icon = CheckSquare;
+                                                iconColor = 'bg-orange-100 text-orange-600';
+                                            }
+
+                                            return (
+                                                <div key={item.id} className="activity-item">
+                                                    <div className="activity-timeline">
+                                                        <div className={`activity-icon-wrapper ${iconColor}`}>
+                                                            <Icon size={16} />
+                                                        </div>
+                                                        {index !== recentActivity.length - 1 && <div className="activity-line"></div>}
+                                                    </div>
+                                                    <div className="activity-content">
+                                                        <div className="activity-header">
+                                                            <p className="activity-title">{item.title}</p>
+                                                            <span className="activity-time">{timeAgo(item.timestamp)}</span>
+                                                        </div>
+                                                        <p className="activity-subtitle">{item.description}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Upcoming Services */}
+                            <div className="activity-card">
+                                <h3>Upcoming Services</h3>
+                                <div className="services-list">
+                                    {upcomingServices.length === 0 ? (
+                                        <div className="empty-state">No upcoming services</div>
+                                    ) : (
+                                        upcomingServices.map((service) => {
+                                            const date = new Date(service.date);
+                                            const day = date.getDate();
+                                            const month = date.toLocaleString('default', { month: 'short' });
+                                            return (
+                                                <div key={service.id} className="service-item">
+                                                    <div className="service-date-card">
+                                                        <span className="service-day">{day}</span>
+                                                        <span className="service-month">{month}</span>
+                                                    </div>
+                                                    <div className="service-details">
+                                                        <p className="service-title">{service.title}</p>
+                                                        <p className="service-info">{service.time} • {service.location}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </>
