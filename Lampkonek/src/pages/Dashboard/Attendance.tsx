@@ -14,6 +14,7 @@ import { initializeRecurringEvents } from '../../utils/initializeRecurringEvents
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 import './Attendance.css';
 import { UserProfile } from '../../components/UserProfile';
+import { useAuth } from '../../context/AuthContext';
 
 interface AttendanceRecord {
     id: string;
@@ -33,9 +34,11 @@ interface AttendanceRecord {
 // Helper to generate consistent colors based on string
 
 export const Attendance = () => {
+    const { profile } = useAuth();
     const [isTakeAttendanceOpen, setIsTakeAttendanceOpen] = useState(false);
     const [isChecklistOpen, setIsChecklistOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [addModalMode, setAddModalMode] = useState<'Onsite' | 'Online'>('Onsite');
     const hasRunAutomation = useState(false);
 
     // State for data
@@ -166,7 +169,7 @@ export const Attendance = () => {
                     });
 
                     if (absentRecords.length > 0) {
-                        await supabase.from('attendance').insert(absentRecords);
+                        await supabase.from('attendance').upsert(absentRecords, { onConflict: 'user_id,date,event' });
                     }
                 }
             }
@@ -301,10 +304,12 @@ export const Attendance = () => {
 
         // Tab Filter
         let matchesTab = true;
+        const isOnline = item.event.toLowerCase().includes('online') || item.remarks === 'Online';
+
         if (activeTab === 'Onsite') {
-            matchesTab = !item.event.toLowerCase().includes('online'); // Assume not online = onsite
+            matchesTab = !isOnline;
         } else if (activeTab === 'Online') {
-            matchesTab = item.event.toLowerCase().includes('online');
+            matchesTab = isOnline;
         }
 
         return matchesSearch && matchesTab;
@@ -337,7 +342,7 @@ export const Attendance = () => {
                 const date = new Date(record.date);
                 if (!isNaN(date.getTime())) {
                     const monthIndex = date.getMonth();
-                    const isOnline = record.event.toLowerCase().includes('online');
+                    const isOnline = record.event.toLowerCase().includes('online') || record.remarks === 'Online';
                     if (isOnline) {
                         data[monthIndex].Online += 1;
                     } else {
@@ -352,7 +357,9 @@ export const Attendance = () => {
     // Counts for Tabs
     const counts = useMemo(() => {
         const all = attendanceRecords.length;
-        const online = attendanceRecords.filter(r => r.event.toLowerCase().includes('online')).length;
+        const online = attendanceRecords.filter(r =>
+            r.event.toLowerCase().includes('online') || r.remarks === 'Online'
+        ).length;
         const onsite = all - online;
         return { all, online, onsite };
     }, [attendanceRecords]);
@@ -403,70 +410,76 @@ export const Attendance = () => {
             <div className="header-actions-row">
                 <div style={{ flex: 1 }}></div> {/* Spacer */}
                 <div className="action-buttons-group">
-                    <button className="btn-secondary" onClick={() => setIsAddModalOpen(true)}>
+                    <button className="btn-secondary" onClick={() => { setAddModalMode('Onsite'); setIsAddModalOpen(true); }}>
                         <Plus size={16} /> Add Onsite
                     </button>
-                    <button className="btn-secondary" onClick={() => setIsAddModalOpen(true)}>
-                        <Plus size={16} /> Add Online
-                    </button>
-                    <button className="btn-primary" onClick={() => setIsChecklistOpen(true)}>
-                        <ClipboardList size={16} /> Take Attendance
-                    </button>
-                    <button className="btn-primary export-btn" onClick={handleExport}>
-                        <Download size={16} /> Export
-                    </button>
-                    <button className="btn-secondary print-btn" onClick={handlePrint}>
-                        <Printer size={16} /> Print
-                    </button>
+                    {profile?.role !== 'Member' && profile?.role !== 'Visitor' && (
+                        <>
+                            <button className="btn-secondary" onClick={() => { setAddModalMode('Online'); setIsAddModalOpen(true); }}>
+                                <Plus size={16} /> Add Online
+                            </button>
+                            <button className="btn-primary" onClick={() => setIsChecklistOpen(true)}>
+                                <ClipboardList size={16} /> Take Attendance
+                            </button>
+                            <button className="btn-primary export-btn" onClick={handleExport}>
+                                <Download size={16} /> Export
+                            </button>
+                            <button className="btn-secondary print-btn" onClick={handlePrint}>
+                                <Printer size={16} /> Print
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
             {/* Filters Bar */}
-            <div className="attendance-filters-bar">
-                <div className="search-wrapper">
-                    <Search className="search-icon" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <div className="filters-right">
-                    <div className="date-filter">
-                        <label>Date From:</label>
+            {profile?.role !== 'Member' && profile?.role !== 'Visitor' && (
+                <div className="attendance-filters-bar">
+                    <div className="search-wrapper">
+                        <Search className="search-icon" size={18} />
                         <input
-                            type="date"
-                            value={dateFrom}
-                            onChange={(e) => setDateFrom(e.target.value)}
-                            placeholder="mm/dd/yyyy"
+                            type="text"
+                            placeholder="Search..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="date-filter">
-                        <label>To:</label>
-                        <input
-                            type="date"
-                            value={dateTo}
-                            onChange={(e) => setDateTo(e.target.value)}
-                            placeholder="mm/dd/yyyy"
-                        />
-                    </div>
-                    <div className="event-filter">
-                        <label>Event</label>
-                        <select
-                            value={selectedEvent}
-                            onChange={(e) => setSelectedEvent(e.target.value)}
-                        >
-                            <option>All Events</option>
-                            {eventsList.map((event, index) => (
-                                <option key={index} value={event}>{event}</option>
-                            ))}
-                        </select>
+                    <div className="filters-right">
+                        <div className="date-filter">
+                            <label>Date From:</label>
+                            <input
+                                type="date"
+                                value={dateFrom}
+                                onChange={(e) => setDateFrom(e.target.value)}
+                                placeholder="mm/dd/yyyy"
+                            />
+                        </div>
+                        <div className="date-filter">
+                            <label>To:</label>
+                            <input
+                                type="date"
+                                value={dateTo}
+                                onChange={(e) => setDateTo(e.target.value)}
+                                placeholder="mm/dd/yyyy"
+                            />
+                        </div>
+                        <div className="event-filter">
+                            <label>Event</label>
+                            <select
+                                value={selectedEvent}
+                                onChange={(e) => setSelectedEvent(e.target.value)}
+                            >
+                                <option>All Events</option>
+                                {eventsList.map((event, index) => (
+                                    <option key={index} value={event}>{event}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
-            <div className="attendance-grid">
+            <div className={`attendance-grid ${profile?.role === 'Member' || profile?.role === 'Visitor' ? 'full-width' : ''}`}>
                 {/* LEFT COLUMN: Table */}
                 <div className="attendance-left-panel">
                     <div className="table-card">
@@ -562,46 +575,52 @@ export const Attendance = () => {
                 </div>
 
                 {/* RIGHT COLUMN: Charts */}
-                <div className="attendance-right-panel">
-                    {/* Monthly Attendance Chart */}
-                    <div className="chart-card">
-                        <h3>Monthly Attendance</h3>
-                        <div style={{ width: '100%', height: 200 }}>
-                            <ResponsiveContainer>
-                                <BarChart data={monthlyAttendanceData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} />
-                                    <RechartsTooltip cursor={{ fill: 'transparent' }} />
-                                    <Bar dataKey="attendance" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={20} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                {profile?.role !== 'Member' && profile?.role !== 'Visitor' && (
+                    <div className="attendance-right-panel">
+                        {/* Monthly Attendance Chart */}
+                        <div className="chart-card">
+                            <h3>Monthly Attendance</h3>
+                            <div style={{ width: '100%', height: 200 }}>
+                                <ResponsiveContainer>
+                                    <BarChart data={monthlyAttendanceData} margin={{ top: 5, right: 10, left: -25, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} />
+                                        <RechartsTooltip cursor={{ fill: 'transparent' }} />
+                                        <Bar dataKey="attendance" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={20} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Onsite vs Online Chart */}
-                    <div className="chart-card">
-                        <h3>Onsite vs Online</h3>
-                        <div style={{ width: '100%', height: 200 }}>
-                            <ResponsiveContainer>
-                                <LineChart data={onsiteVsOnlineData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} />
-                                    <RechartsTooltip />
-                                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                                    <Line type="monotone" dataKey="Online" stroke="#6366f1" strokeWidth={2} dot={{ r: 3, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 5 }} />
-                                    <Line type="monotone" dataKey="Onsite" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 5 }} />
-                                </LineChart>
-                            </ResponsiveContainer>
+                        {/* Onsite vs Online Chart */}
+                        <div className="chart-card">
+                            <h3>Onsite vs Online</h3>
+                            <div style={{ width: '100%', height: 200 }}>
+                                <ResponsiveContainer>
+                                    <LineChart data={onsiteVsOnlineData} margin={{ top: 5, right: 10, left: -25, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} />
+                                        <RechartsTooltip />
+                                        <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                                        <Line type="monotone" dataKey="Online" stroke="#6366f1" strokeWidth={2} dot={{ r: 3, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 5 }} />
+                                        <Line type="monotone" dataKey="Onsite" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 5 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
 
             <TakeAttendanceModal isOpen={isTakeAttendanceOpen} onClose={() => setIsTakeAttendanceOpen(false)} />
             <AttendanceChecklistModal isOpen={isChecklistOpen} onClose={() => setIsChecklistOpen(false)} />
-            <AddAttendanceModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+            <AddAttendanceModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                initialMode={addModalMode}
+            />
         </div>
     );
 };

@@ -21,7 +21,9 @@ import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { AddAnnouncementModal } from './AddAnnouncementModal';
 import { AddClusterModal } from './AddClusterModal';
 import { AddMinistryModal } from './AddMinistryModal';
+import { EditUserRolesModal } from './EditUserRolesModal';
 import { useAuth } from '../../context/AuthContext';
+import { UserProfile } from '../../components/UserProfile';
 
 interface AppSettings {
     churchName: string;
@@ -102,6 +104,7 @@ export const Settings = () => {
     const [selectedMinistry, setSelectedMinistry] = useState<Ministry | null>(null);
     const [selectedRole, setSelectedRole] = useState<GroupStats | null>(null);
     const [tempPermissions, setTempPermissions] = useState<string[]>([]);
+    const [isUserRolesModalOpen, setIsUserRolesModalOpen] = useState(false);
 
     const APP_PAGES = ['Dashboard', 'Attendance', 'Members', 'Reports', 'Settings', 'Reservation'];
 
@@ -787,7 +790,20 @@ export const Settings = () => {
                     <div>
                         <div className="set-content-header">
                             User Roles & Permissions
+                            <button
+                                className="btn-primary"
+                                style={{ fontSize: '0.85rem' }}
+                                onClick={() => setIsUserRolesModalOpen(true)}
+                            >
+                                <Users size={16} /> Edit User Roles
+                            </button>
                         </div>
+
+                        <EditUserRolesModal
+                            isOpen={isUserRolesModalOpen}
+                            onClose={() => setIsUserRolesModalOpen(false)}
+                            roles={rolesList.map(r => r.name)}
+                        />
 
                         {selectedRole ? (
                             <div className="role-editor">
@@ -1137,11 +1153,15 @@ export const Settings = () => {
     };
 
     return (
-        <div className="settings-page">
+        <div className="settings-page dashboard-view-content">
             {/* Header */}
             <header className="top-bar">
                 <div className="page-title">
                     <h1 className="hide-mobile">Settings</h1>
+                    <p>Configure church management and application preferences.</p>
+                </div>
+                <div className="top-actions">
+                    <UserProfile />
                 </div>
             </header>
 

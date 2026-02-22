@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.4.0</span>
+                            <span className="version-number">v1.5.0</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,23 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 22, 2026 (Evening)</span>
+                                <h4 className="update-title">Premium Dashboard Standardization & UI Polish ✨</h4>
+                                <p>A major design synchronization across the entire dashboard suite, ensuring a consistent, premium feel on every page.</p>
+                                <ul className="feature-list">
+                                    <li>🎨 <strong>Unified Design Language:</strong> Standardized layout and spacing across all dashboard tabs for a cohesive user experience.</li>
+                                    <li>👤 <strong>Global Identity:</strong> Integrated the UserProfile widget into every header, keeping your status visible at all times.</li>
+                                    <li>📈 <strong>Modern Analytics:</strong> Re-engineered chart components with "edge-to-edge" styling for a more professional, streamlined look.</li>
+                                    <li>📱 <strong>Native Mobile Feel:</strong> Enhanced mobile modals with pull handles and improved touch-friendly action grids.</li>
+                                    <li>🧼 <strong>Clean Viewports:</strong> Optimized headers with contextual subtitles and improved white space management (5rem header gap).</li>
+                                    <li>✨ <strong>Logic Fixes:</strong> Resolved JSX structural issues in Reports and cleaned up experimental 'Export' features for a more focused experience.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 22, 2026</span>
                                 <h4 className="update-title">Total Mobile Responsiveness Overhaul 📱</h4>

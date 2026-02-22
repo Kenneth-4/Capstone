@@ -178,6 +178,10 @@
     gap: 1.5rem;
 }
 
+.attendance-grid.full-width {
+    grid-template-columns: 1fr;
+}
+
 @media (max-width: 1024px) {
     .attendance-grid {
         grid-template-columns: 1fr;

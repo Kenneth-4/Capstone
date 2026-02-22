@@ -139,6 +139,7 @@ export const Members = () => {
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
+                .neq('role', 'Administrator')
                 .order('full_name', { ascending: true });
 
             if (error) throw error;
@@ -495,10 +496,6 @@ export const Members = () => {
                 </div>
 
                 <div className="header-actions">
-                    <button className="add-member-btn" onClick={() => { setEditingMember(null); setIsAddMemberOpen(true); }}>
-                        <Plus size={18} />
-                        <span className="btn-text">Add Member</span>
-                    </button>
                     <button className="export-btn hide-mobile" onClick={handleExport}>
                         <Download size={18} />
                         Export
@@ -715,10 +712,6 @@ export const Members = () => {
                 member={editingMember}
                 onSuccess={fetchMembers}
             />
-
-            <button className="mobile-add-btn" onClick={() => { setEditingMember(null); setIsAddMemberOpen(true); }}>
-                <Plus size={24} />
-            </button>
         </div>
     );
 };

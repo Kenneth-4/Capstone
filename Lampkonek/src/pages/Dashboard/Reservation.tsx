@@ -20,6 +20,7 @@ import { NewReservationModal } from './NewReservationModal';
 import { RecurringEventsModal } from './RecurringEventsModal';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
+import { UserProfile } from '../../components/UserProfile';
 
 interface Reservation {
     id: string;
@@ -299,10 +300,14 @@ export const Reservation = () => {
         });
 
     return (
-        <div className="reservation-content">
+        <div className="reservation-content dashboard-view-content">
             <header className="top-bar">
                 <div className="page-title">
                     <h1>Reservation</h1>
+                    <p>Manage and track church events and venue bookings.</p>
+                </div>
+                <div className="top-actions">
+                    <UserProfile />
                 </div>
             </header>
 

@@ -8,6 +8,7 @@ import './AddAttendanceModal.css';
 interface AddAttendanceModalProps {
     isOpen: boolean;
     onClose: () => void;
+    initialMode?: 'Onsite' | 'Online';
 }
 
 interface Member {
@@ -15,12 +16,17 @@ interface Member {
     full_name: string;
 }
 
-export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, onClose }) => {
+export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, onClose, initialMode = 'Onsite' }) => {
     // Form State
     const [memberId, setMemberId] = useState('');
     const [status, setStatus] = useState('Present');
-    const [mode, setMode] = useState('Onsite'); // Assuming 'mode' isn't in DB schema yet, we might need to add it or store in remarks? 
-    // The previous modal didn't have 'mode'. Let's check the schema implied by previous turn.
+    const [mode, setMode] = useState(initialMode);
+
+    useEffect(() => {
+        if (isOpen) {
+            setMode(initialMode);
+        }
+    }, [isOpen, initialMode]);    // The previous modal didn't have 'mode'. Let's check the schema implied by previous turn.
     // The user didn't mention 'mode' column. I'll store it in remarks for now if needed, or omit if not supported.
     // Search/Dropdown State
     const [searchTerm, setSearchTerm] = useState('');
@@ -181,12 +187,14 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
 
             const { error } = await supabase
                 .from('attendance')
-                .insert({
+                .upsert({
                     user_id: memberId,
                     date: date,
                     event: selectedEvent,
                     status: status,
                     remarks: mode // Storing mode in remarks
+                }, {
+                    onConflict: 'user_id,date,event'
                 });
 
             if (error) throw error;
@@ -289,7 +297,7 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
                                 <select
                                     className="form-input"
                                     value={mode}
-                                    onChange={(e) => setMode(e.target.value)}
+                                    onChange={(e) => setMode(e.target.value as 'Onsite' | 'Online')}
                                 >
                                     <option value="Onsite">Onsite</option>
                                     <option value="Online">Online</option>

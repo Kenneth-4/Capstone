@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
     Filter,
-    Download,
     ChevronLeft,
     ChevronRight,
 } from 'lucide-react';
@@ -16,6 +15,7 @@ import {
 } from 'recharts';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
+import { UserProfile } from '../../components/UserProfile';
 import './Reports.css';
 
 // Interfaces
@@ -282,38 +282,38 @@ export const Reports = () => {
     );
 
     return (
-        <div className="reports-content">
+        <div className="reports-content dashboard-view-content">
             {/* Header */}
             <header className="top-bar">
                 <div className="page-title hide-mobile">
                     <h1>Attendance Report</h1>
+                    <p>View historical data and growth trends.</p>
                 </div>
-
-                <div className="reports-header-controls">
-                    <div className="filter-group">
-                        <Filter size={16} className="filter-icon" />
-                        <select
-                            className="date-filter-select"
-                            value={dateFilter}
-                            onChange={(e) => setDateFilter(e.target.value)}
-                        >
-                            <option>Today</option>
-                            <option>This Week</option>
-                            <option>This Month</option>
-                            <option>Last 7 Days</option>
-                            <option>Last 30 Days</option>
-                            <option>Last 3 Months</option>
-                            <option>Last 6 Months</option>
-                            <option>This Year</option>
-                        </select>
-                    </div>
-
-                    <button className="export-report-btn">
-                        <Download size={16} />
-                        <span>Export</span>
-                    </button>
+                <div className="top-actions">
+                    <UserProfile />
                 </div>
             </header>
+            <div className="reports-header-controls">
+                <div className="filter-group">
+                    <Filter size={16} className="filter-icon" />
+                    <select
+                        className="date-filter-select"
+                        value={dateFilter}
+                        onChange={(e) => setDateFilter(e.target.value)}
+                    >
+                        <option>Today</option>
+                        <option>This Week</option>
+                        <option>This Month</option>
+                        <option>Last 7 Days</option>
+                        <option>Last 30 Days</option>
+                        <option>Last 3 Months</option>
+                        <option>Last 6 Months</option>
+                        <option>This Year</option>
+                    </select>
+                </div>
+
+
+            </div>
 
             <div className="reports-container">
                 {/* Stats Grid */}
@@ -563,6 +563,6 @@ export const Reports = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

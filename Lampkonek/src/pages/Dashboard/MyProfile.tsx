@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
+import { UserProfile } from '../../components/UserProfile';
 import './MyProfile.css';
 
 export const MyProfile = () => {
@@ -174,14 +175,14 @@ export const MyProfile = () => {
     };
 
     return (
-        <div className="my-profile-page">
+        <div className="my-profile-page dashboard-view-content">
             <header className="top-bar">
                 <div className="page-title">
                     <h1>My Profile</h1>
+                    <p>Manage your account settings and preferences.</p>
                 </div>
                 <div className="top-actions">
-                    <div className="user-profile-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
-                    </div>
+                    <UserProfile />
                 </div>
             </header>
 

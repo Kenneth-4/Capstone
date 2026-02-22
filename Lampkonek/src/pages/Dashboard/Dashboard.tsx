@@ -13,6 +13,7 @@ import { MemberReport } from './MemberReport';
 import { Settings as SettingsPage } from './Settings';
 import { MyProfile } from './MyProfile';
 import { useAuth } from '../../context/AuthContext';
+import { UserProfile } from '../../components/UserProfile';
 
 
 interface DashboardStats {
@@ -637,18 +638,22 @@ export const Dashboard = () => {
                 ) : activeTab === 'My Profile' ? (
                     <MyProfile />
                 ) : (
-                    <>
-                        {/* Top Bar */}
+                    <div className="dashboard-view-content">
+                        {/* Top Bar - Header area with page title and user profile */}
                         <header className="top-bar">
                             <div className="page-title">
                                 <h1>Dashboard</h1>
-
+                                <p>Welcome back, {profile?.full_name?.split(' ')[0]}!</p>
+                            </div>
+                            <div className="top-actions">
+                                <UserProfile />
                             </div>
                         </header>
 
+                        {/* We use a robust margin-bottom on the top-bar via CSS to ensure 
+                            clear visual separation before the stats grid begins. */}
 
-
-                        {/* Stats Grid */}
+                        {/* Stats Grid - Key performance indicators */}
                         <div className="dashboard-stats-grid">
                             <div className="dashboard-stat-card">
                                 <div className="stat-content">
@@ -762,7 +767,7 @@ export const Dashboard = () => {
                                     <>
                                         <div style={{ width: '100%', height: 300 }}>
                                             <ResponsiveContainer>
-                                                <LineChart data={attendanceData}>
+                                                <LineChart data={attendanceData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
                                                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
@@ -939,7 +944,7 @@ export const Dashboard = () => {
                                 </div>
                             </div>
                         </div>
-                    </>
+                    </div>
                 )}
             </main>
         </div>

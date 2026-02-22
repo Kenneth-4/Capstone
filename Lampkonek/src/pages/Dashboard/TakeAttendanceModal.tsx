@@ -157,7 +157,7 @@ export const TakeAttendanceModal: React.FC<TakeAttendanceModalProps> = ({ isOpen
                     date: selectedDate,
                     event: selectedEvent,
                     status: status,
-                    remarks: `Mode: ${mode}`
+                    remarks: mode
                 }, {
                     onConflict: 'user_id,date,event'
                 });
