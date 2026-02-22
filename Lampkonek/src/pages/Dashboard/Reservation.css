@@ -321,12 +321,208 @@
     color: #ef4444;
 }
 
-@media (max-width: 1024px) {
-    .res-main-layout {
-        grid-template-columns: 1fr;
+.res-modal-actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+}
+
+.res-action-btn {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: white;
+    font-weight: 500;
+}
+
+.res-action-btn.delete {
+    background-color: #dc2626;
+}
+
+.res-action-btn.edit {
+    background-color: #3b82f6;
+}
+
+.res-status-btn {
+    flex: 1 1 auto;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: white;
+}
+
+.res-status-btn.reject {
+    background-color: #ef4444;
+}
+
+.res-status-btn.approve {
+    background-color: #10b981;
+}
+
+.res-action-btn:disabled,
+.res-status-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.res-action-btn .btn-text {
+    display: none;
+}
+
+.mobile-add-btn,
+.mobile-auto-btn {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .page-title {
+        display: none;
+    }
+
+    .top-bar {
+        margin-bottom: 0;
+        justify-content: flex-end;
+    }
+
+    .reservation-container {
+        gap: 1rem;
+    }
+
+    .reservation-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .res-search-input {
+        width: 100%;
+        background-position: left 1rem center;
+    }
+
+    .desktop-res-actions {
+        display: none !important;
     }
 
     .res-stats-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
     }
+
+    .res-stat-card {
+        padding: 1rem;
+    }
+
+    .res-stat-value {
+        font-size: 1.5rem;
+    }
+
+    .res-main-layout {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .calendar-card,
+    .upcoming-section {
+        padding: 1.25rem;
+        border-radius: 12px;
+    }
+
+    .res-card {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+        position: relative;
+    }
+
+    .res-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 0.65rem;
+    }
+
+    .res-meta {
+        gap: 0.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .res-meta-item {
+        font-size: 0.75rem;
+    }
+
+    .res-modal-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .res-action-btn,
+    .res-status-btn {
+        width: 100%;
+        padding: 0.8rem;
+        justify-content: center;
+    }
+
+    .res-action-btn .btn-text {
+        display: inline;
+        /* Ensure text is visible when stacked */
+    }
+
+    .mobile-add-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        bottom: 2rem;
+        right: 1.5rem;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+        cursor: pointer;
+        z-index: 1000;
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .mobile-auto-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        bottom: 6.5rem;
+        right: 1.5rem;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: white;
+        color: #4b5563;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        z-index: 1000;
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .mobile-add-btn:active,
+    .mobile-auto-btn:active {
+        transform: scale(0.9);
+    }
+}
+
+.desktop-res-actions {
+    display: flex;
+    gap: 1rem;
 }

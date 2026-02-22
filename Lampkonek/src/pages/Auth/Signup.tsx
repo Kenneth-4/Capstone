@@ -34,9 +34,9 @@ export const Signup = () => {
 
                 if (error) throw error;
 
-                // Filter out Admin and Pastor from signup options
+                // Only show Member and Visitor as signup options
                 const filteredRoles = (data || []).filter(role =>
-                    !['Admin', 'Pastor'].includes(role.name)
+                    ['Member', 'Visitor'].includes(role.name)
                 );
 
                 setRoles(filteredRoles);
@@ -45,7 +45,7 @@ export const Signup = () => {
                 // Fallback to default roles if fetch fails
                 setRoles([
                     { id: 1, name: 'Member' },
-                    { id: 2, name: 'Volunteer' }
+                    { id: 2, name: 'Visitor' }
                 ]);
             }
         };

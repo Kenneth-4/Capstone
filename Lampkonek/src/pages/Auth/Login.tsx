@@ -52,7 +52,9 @@ export const Login = () => {
 
                 <div className="login-content">
                     <div className="login-header">
-
+                        <div className="mobile-logo">
+                            <img src="/logo/lamp.png" alt="Lampkonek Logo" />
+                        </div>
                         <h1>Welcome Back</h1>
                         <p>Please enter your details to sign in.</p>
                     </div>

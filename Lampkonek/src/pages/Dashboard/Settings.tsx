@@ -21,6 +21,7 @@ import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { AddAnnouncementModal } from './AddAnnouncementModal';
 import { AddClusterModal } from './AddClusterModal';
 import { AddMinistryModal } from './AddMinistryModal';
+import { useAuth } from '../../context/AuthContext';
 
 interface AppSettings {
     churchName: string;
@@ -69,6 +70,7 @@ interface Ministry {
 }
 
 export const Settings = () => {
+    const { profile } = useAuth();
     const [activeSetting, setActiveSetting] = useState('General');
     const [loading, setLoading] = useState(false);
 
@@ -780,6 +782,7 @@ export const Settings = () => {
                     </div>
                 );
             case 'User Roles':
+                if (profile?.role !== 'Administrator') return <div>Access Denied</div>;
                 return (
                     <div>
                         <div className="set-content-header">
@@ -1089,7 +1092,6 @@ export const Settings = () => {
                                 </div>
                                 <button
                                     className="btn-primary"
-                                    style={{ width: '200px' }}
                                     onClick={handleCreateBackup}
                                     disabled={loading}
                                 >
@@ -1115,7 +1117,6 @@ export const Settings = () => {
                                 />
                                 <button
                                     className="btn-primary btn-green"
-                                    style={{ width: '200px' }}
                                     onClick={handleRestoreClick}
                                     disabled={loading}
                                 >
@@ -1140,7 +1141,7 @@ export const Settings = () => {
             {/* Header */}
             <header className="top-bar">
                 <div className="page-title">
-                    <h1>Settings</h1>
+                    <h1 className="hide-mobile">Settings</h1>
                 </div>
             </header>
 
@@ -1153,12 +1154,14 @@ export const Settings = () => {
                     >
                         <Globe size={18} /> General
                     </button>
-                    <button
-                        className={`settings-nav-item ${activeSetting === 'User Roles' ? 'active' : ''}`}
-                        onClick={() => setActiveSetting('User Roles')}
-                    >
-                        <Shield size={18} /> User Roles
-                    </button>
+                    {profile?.role === 'Administrator' && (
+                        <button
+                            className={`settings-nav-item ${activeSetting === 'User Roles' ? 'active' : ''}`}
+                            onClick={() => setActiveSetting('User Roles')}
+                        >
+                            <Shield size={18} /> User Roles
+                        </button>
+                    )}
                     <button
                         className={`settings-nav-item ${activeSetting === 'Reservations' ? 'active' : ''}`}
                         onClick={() => setActiveSetting('Reservations')}

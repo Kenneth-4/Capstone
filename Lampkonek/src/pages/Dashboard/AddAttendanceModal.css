@@ -169,9 +169,36 @@ select.form-input {
     background-color: #4f46e5;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+    .modal-container.attendance-modal {
+        width: 100%;
+        height: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .modal-header {
+        padding: 1.25rem 1rem;
+    }
+
+    .modal-body {
+        padding: 0 1rem 1rem 1rem;
+        flex: 1;
+        overflow-y: auto;
+    }
+
     .form-row-split {
         grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .modal-footer-simple {
+        flex-direction: column-reverse;
+        padding-top: 1rem;
+    }
+
+    .modal-footer-simple button {
+        width: 100%;
     }
 }
 

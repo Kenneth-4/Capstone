@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import {
     Search,
     Filter,
-    ChevronLeft,
-    ChevronRight,
     User,
     UserCheck,
     UserX,
@@ -105,8 +103,11 @@ export const Members = () => {
     const [statsLoading, setStatsLoading] = useState(false);
 
     // Pagination
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(12); // Grid layout usually fits more items
+    const [visibleCount, setVisibleCount] = useState(window.innerWidth <= 768 ? 10 : 20);
+
+    const handleShowMore = () => {
+        setVisibleCount(prev => prev * 2);
+    };
 
     // Click outside handler for menu
     const menuRef = useRef<HTMLDivElement>(null);
@@ -234,15 +235,7 @@ export const Members = () => {
     });
 
     // Pagination Logic
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredMembers.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
-
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    const currentItems = filteredMembers.slice(0, visibleCount);
 
     const handleEditMember = (member: Member) => {
         setEditingMember(member);
@@ -485,6 +478,10 @@ export const Members = () => {
                         }
                     }}
                 />
+
+                <button className="mobile-add-btn" onClick={() => { setEditingMember(null); setIsAddMemberOpen(true); }}>
+                    <Plus size={24} />
+                </button>
             </div>
         );
     }
@@ -500,9 +497,9 @@ export const Members = () => {
                 <div className="header-actions">
                     <button className="add-member-btn" onClick={() => { setEditingMember(null); setIsAddMemberOpen(true); }}>
                         <Plus size={18} />
-                        Add Member
+                        <span className="btn-text">Add Member</span>
                     </button>
-                    <button className="export-btn" onClick={handleExport}>
+                    <button className="export-btn hide-mobile" onClick={handleExport}>
                         <Download size={18} />
                         Export
                     </button>
@@ -559,7 +556,6 @@ export const Members = () => {
                         value={searchTerm}
                         onChange={(e) => {
                             setSearchTerm(e.target.value);
-                            setCurrentPage(1); // Reset page on search
                         }}
                     />
                 </div>
@@ -573,7 +569,6 @@ export const Members = () => {
                         value={statusFilter}
                         onChange={(e) => {
                             setStatusFilter(e.target.value);
-                            setCurrentPage(1);
                         }}
                     >
                         <option>All Status</option>
@@ -588,7 +583,6 @@ export const Members = () => {
                         value={clusterFilter}
                         onChange={(e) => {
                             setClusterFilter(e.target.value);
-                            setCurrentPage(1);
                         }}
                     >
                         <option>All Clusters</option>
@@ -700,47 +694,12 @@ export const Members = () => {
                         ))}
                     </div>
 
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="pagination-container">
-                            <div className="pagination-info" style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-                                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredMembers.length)} of {filteredMembers.length} entries
-                            </div>
-                            <div className="pagination-controls" style={{ display: 'flex', gap: '0.5rem' }}>
-                                <button
-                                    className="page-btn"
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                    style={{ opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
-                                >
-                                    <ChevronLeft size={16} />
-                                </button>
-
-                                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                                    .map((page) => {
-                                        // Add ellipsis logic if needed, simplify for now
-                                        return (
-                                            <button
-                                                key={page}
-                                                className={`page-btn ${currentPage === page ? 'active' : ''}`}
-                                                onClick={() => handlePageChange(page)}
-                                            >
-                                                {page}
-                                            </button>
-                                        );
-                                    })
-                                }
-
-                                <button
-                                    className="page-btn"
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage === totalPages}
-                                    style={{ opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
-                                >
-                                    <ChevronRight size={16} />
-                                </button>
-                            </div>
+                    {/* Show More Button */}
+                    {filteredMembers.length > visibleCount && (
+                        <div className="show-more-container" style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
+                            <button className="btn-secondary show-more-btn" onClick={handleShowMore}>
+                                Show More ({filteredMembers.length - visibleCount} remaining)
+                            </button>
                         </div>
                     )}
                 </>
@@ -756,6 +715,10 @@ export const Members = () => {
                 member={editingMember}
                 onSuccess={fetchMembers}
             />
+
+            <button className="mobile-add-btn" onClick={() => { setEditingMember(null); setIsAddMemberOpen(true); }}>
+                <Plus size={24} />
+            </button>
         </div>
     );
 };

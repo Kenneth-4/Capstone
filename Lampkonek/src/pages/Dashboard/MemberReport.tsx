@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-    Download,
     ChevronDown,
     TrendingUp,
     CheckCircle2
@@ -193,7 +192,7 @@ export const MemberReport = () => {
         <div className="member-report-content">
             {/* Header */}
             <header className="top-bar">
-                <div className="page-title">
+                <div className="page-title hide-mobile">
                     <h1>Members Report</h1>
                 </div>
             </header>
@@ -202,23 +201,12 @@ export const MemberReport = () => {
                 {/* Controls */}
                 <div className="mr-controls-row">
                     <div className="mr-filters">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: 500 }}>Filter by Cluster:</span>
+                        <div className="mr-filter-group">
+                            <span className="mr-filter-label">Filter by Cluster:</span>
                             <select
                                 className="mr-select"
                                 value={clusterFilter}
                                 onChange={(e) => setClusterFilter(e.target.value)}
-                                style={{
-                                    minWidth: '150px',
-                                    padding: '0.5rem 2rem 0.5rem 0.75rem',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '8px',
-                                    fontSize: '0.875rem',
-                                    color: '#374151',
-                                    backgroundColor: 'white',
-                                    cursor: 'pointer',
-                                    outline: 'none'
-                                }}
                             >
                                 <option>All Clusters</option>
                                 {availableClusters.map(cluster => (
@@ -227,27 +215,14 @@ export const MemberReport = () => {
                             </select>
                             {clusterFilter !== 'All Clusters' && (
                                 <button
+                                    className="mr-clear-btn"
                                     onClick={() => setClusterFilter('All Clusters')}
-                                    style={{
-                                        padding: '0.25rem 0.5rem',
-                                        fontSize: '0.75rem',
-                                        color: '#6b7280',
-                                        backgroundColor: '#f3f4f6',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}
                                 >
                                     Clear
                                 </button>
                             )}
                         </div>
                     </div>
-
-                    <button className="export-report-btn">
-                        <Download size={16} />
-                        <span>Export</span>
-                    </button>
                 </div>
 
                 {/* Stats Grid */}
@@ -404,13 +379,13 @@ export const MemberReport = () => {
                             ) : (
                                 filteredMembers.map((m, i) => (
                                     <tr key={i}>
-                                        <td style={{ fontWeight: 600 }}>{m.name}</td>
-                                        <td>
+                                        <td data-label="Name" style={{ fontWeight: 600 }}>{m.name}</td>
+                                        <td data-label="Status">
                                             <span className={`status-pill st-${m.status.toLowerCase()}`}>{m.status}</span>
                                         </td>
-                                        <td>{m.ministry}</td>
-                                        <td>{m.cluster}</td>
-                                        <td>{m.joinDate}</td>
+                                        <td data-label="Ministry">{m.ministry}</td>
+                                        <td data-label="Cluster">{m.cluster}</td>
+                                        <td data-label="Join Date">{m.joinDate}</td>
                                     </tr>
                                 ))
                             )}

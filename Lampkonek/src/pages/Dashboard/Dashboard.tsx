@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, User, Calendar, BarChart, Settings, LogOut, UserCircle, CheckSquare, Clock, Activity, UserPlus, TrendingUp, Bell, X } from 'lucide-react';
+import { LayoutDashboard, Users, User, Calendar, BarChart, Settings, LogOut, UserCircle, CheckSquare, Clock, Activity, UserPlus, TrendingUp, Bell, MapPin, ChevronRight, Repeat, Menu, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -51,6 +51,17 @@ interface UpcomingService {
     date: string; // YYYY-MM-DD
     time: string;
     location: string;
+    isRecurring?: boolean;
+}
+
+interface RecurringEventConfig {
+    key: string;
+    title: string;
+    dayOfWeek: number;
+    time: string;
+    endTime: string;
+    enabled: boolean;
+    venue: string;
 }
 
 const timeAgo = (dateString: string) => {
@@ -88,9 +99,9 @@ export const Dashboard = () => {
     const [activeTab, setActiveTab] = useState('');
     const [reportType, setReportType] = useState('Attendance'); // 'Attendance' | 'Members'
     const [isLoggingOut, setIsLoggingOut] = useState(false);
-    const [showAnnouncement, setShowAnnouncement] = useState(true);
     const [allowedTabs, setAllowedTabs] = useState<string[]>([]);
     const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [stats, setStats] = useState<DashboardStats>({
         totalMembers: 0,
         activeMembers: 0,
@@ -277,20 +288,72 @@ export const Dashboard = () => {
                     .from('reservations')
                     .select('*')
                     .eq('status', 'APPROVED')
-                    .gte('event_date', new Date().toISOString().split('T')[0])
-                    .order('event_date', { ascending: true })
-                    .limit(4);
+                    .gte('event_date', today)
+                    .order('event_date', { ascending: true });
 
-                if (upcoming) {
-                    const services: UpcomingService[] = upcoming.map((u: any) => ({
-                        id: u.id,
-                        title: u.event_title || 'Event',
-                        date: u.event_date,
-                        time: u.start_time ? `${formatTime(u.start_time)}` : 'TBD',
-                        location: u.venue || 'Main Hall'
-                    }));
-                    setUpcomingServices(services);
+                // Fetch Recurring Settings
+                const { data: recurringData } = await supabase
+                    .from('app_settings')
+                    .select('value')
+                    .eq('key', 'recurring_events')
+                    .single();
+
+                let recurringConfigs: RecurringEventConfig[] = [];
+                if (recurringData?.value) {
+                    recurringConfigs = JSON.parse(recurringData.value);
+                } else {
+                    // Default fallbacks if not configured
+                    recurringConfigs = [
+                        { key: 'sunday_service', title: 'Sunday Service', dayOfWeek: 0, time: '09:00', endTime: '11:00', enabled: true, venue: 'Main Sanctuary' },
+                        { key: 'prayer_meeting', title: 'Prayer Meeting', dayOfWeek: 1, time: '19:00', endTime: '20:30', enabled: true, venue: 'Prayer Room' },
+                        { key: 'bible_study', title: 'Bible Study', dayOfWeek: 5, time: '18:00', endTime: '19:30', enabled: true, venue: 'Community Hall' },
+                    ];
                 }
+
+                const allServices: UpcomingService[] = [];
+
+                // 1. Add manual approved reservations
+                if (upcoming) {
+                    upcoming.forEach((u: any) => {
+                        allServices.push({
+                            id: u.id,
+                            title: u.event_title || 'Event',
+                            date: u.event_date,
+                            time: u.start_time ? `${formatTime(u.start_time)}` : 'TBD',
+                            location: u.venue || 'Main Hall',
+                            isRecurring: false
+                        });
+                    });
+                }
+
+                // 2. Generate recurring instances for TODAY ONLY
+                const d = new Date();
+                const dayOfWeek = d.getDay();
+                const dateStr = d.toISOString().split('T')[0];
+
+                recurringConfigs
+                    .filter(config => config.enabled && config.dayOfWeek === dayOfWeek)
+                    .forEach(config => {
+                        const exists = allServices.find(s => s.date === dateStr && s.title === config.title);
+                        if (!exists) {
+                            allServices.push({
+                                id: `recurring-${config.key}-${dateStr}`,
+                                title: config.title,
+                                date: dateStr,
+                                time: formatTime(config.time),
+                                location: config.venue,
+                                isRecurring: true
+                            });
+                        }
+                    });
+
+                // Filter everything to show only TODAY's events
+                const servicesToday = allServices.filter(s => s.date === dateStr);
+
+                // Sort by time
+                servicesToday.sort((a, b) => a.time.localeCompare(b.time));
+
+                setUpcomingServices(servicesToday);
 
 
             } catch (error) {
@@ -469,11 +532,25 @@ export const Dashboard = () => {
                 </div>
             )}
             {/* Sidebar */}
-            <aside className="sidebar">
+            {/* Mobile Header */}
+            <header className="mobile-header">
+                <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>
+                    <Menu size={24} />
+                </button>
+                <div className="mobile-logo-container">
+                    <img src="/logo/lamp.png" alt="Lampkonek" className="mobile-logo" />
+                </div>
+                <div style={{ width: 40 }}></div> {/* Spacer for alignment */}
+            </header>
+
+            <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-header">
                     <div className="sidebar-logo-container">
-                        <img src="/logo/lamp.png" alt="Lampkonek Logo" className="sidebar-logo" />
+                        <img src="/logo/lamp.png" alt="Lampkonek" className="sidebar-logo" />
                     </div>
+                    <button className="sidebar-close-btn" onClick={() => setIsSidebarOpen(false)}>
+                        <X size={24} />
+                    </button>
                 </div>
 
                 <nav className="sidebar-nav">
@@ -483,8 +560,12 @@ export const Dashboard = () => {
                                 <a
                                     key={item.id}
                                     href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setActiveTab(item.id); // Use item.id for consistency with navItems and activeTab state
+                                        setIsSidebarOpen(false); // Close sidebar on mobile
+                                    }}
                                     className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-                                    onClick={(e) => { e.preventDefault(); setActiveTab(item.id); }}
                                 >
                                     <item.icon size={20} />
                                     <span>{item.label}</span>
@@ -502,6 +583,9 @@ export const Dashboard = () => {
                     </button>
                 </div>
             </aside>
+
+            {/* Sidebar Overlay for mobile */}
+            {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
 
             {/* Main Content */}
             <main className="main-content">
@@ -562,23 +646,7 @@ export const Dashboard = () => {
                             </div>
                         </header>
 
-                        {/* Announcement Banner */}
-                        {showAnnouncement && latestAnnouncement && (
-                            <div className="announcement-banner">
-                                <div className="announcement-content">
-                                    <div className="announcement-icon">
-                                        <Bell size={20} />
-                                    </div>
-                                    <div className="announcement-text">
-                                        <span className="announcement-title">New Announcement:</span>
-                                        <span>{latestAnnouncement?.title || 'No new announcements.'}</span>
-                                    </div>
-                                </div>
-                                <button className="announcement-close" onClick={() => setShowAnnouncement(false)}>
-                                    <X size={18} />
-                                </button>
-                            </div>
-                        )}
+
 
                         {/* Stats Grid */}
                         <div className="dashboard-stats-grid">
@@ -725,23 +793,25 @@ export const Dashboard = () => {
                                         Loading chart data...
                                     </div>
                                 ) : (
-                                    <div style={{ width: '100%', height: 300, display: 'flex', alignItems: 'center' }}>
-                                        <ResponsiveContainer width="50%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={memberStatusData}
-                                                    innerRadius={60}
-                                                    outerRadius={80}
-                                                    paddingAngle={0}
-                                                    dataKey="value"
-                                                >
-                                                    {memberStatusData.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                                    ))}
-                                                </Pie>
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        <div style={{ width: '50%', paddingLeft: '1rem' }}>
+                                    <div className="pie-chart-container" style={{ width: '100%', height: 300, display: 'flex', alignItems: 'center' }}>
+                                        <div className="pie-chart-wrapper" style={{ width: '50%', height: '100%' }}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={memberStatusData}
+                                                        innerRadius={60}
+                                                        outerRadius={80}
+                                                        paddingAngle={0}
+                                                        dataKey="value"
+                                                    >
+                                                        {memberStatusData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                                        ))}
+                                                    </Pie>
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                        <div className="pie-chart-legend" style={{ width: '50%', paddingLeft: '1rem' }}>
                                             <table style={{ width: '100%', fontSize: '0.85rem', color: '#4b5563' }}>
                                                 <tbody>
                                                     {memberStatusData.map((item, index) => {
@@ -816,10 +886,24 @@ export const Dashboard = () => {
 
                             {/* Upcoming Services */}
                             <div className="activity-card">
-                                <h3>Upcoming Services</h3>
+                                <h3>Announcements & Upcoming Services</h3>
                                 <div className="services-list">
+                                    {latestAnnouncement && (
+                                        <div className="announcement-service-item">
+                                            <div className="service-date-card announcement-bg">
+                                                <Bell size={20} />
+                                            </div>
+                                            <div className="service-details">
+                                                <div className="service-title-group">
+                                                    <p className="service-title announcement-title-text">Announcement</p>
+                                                    <ChevronRight size={14} className="service-arrow" />
+                                                </div>
+                                                <p className="service-info">{latestAnnouncement.title}</p>
+                                            </div>
+                                        </div>
+                                    )}
                                     {upcomingServices.length === 0 ? (
-                                        <div className="empty-state">No upcoming services</div>
+                                        <div className="empty-state">No events scheduled for today</div>
                                     ) : (
                                         upcomingServices.map((service) => {
                                             const date = new Date(service.date);
@@ -832,8 +916,21 @@ export const Dashboard = () => {
                                                         <span className="service-month">{month}</span>
                                                     </div>
                                                     <div className="service-details">
-                                                        <p className="service-title">{service.title}</p>
-                                                        <p className="service-info">{service.time} • {service.location}</p>
+                                                        <div className="service-title-group">
+                                                            <p className="service-title">
+                                                                {service.isRecurring && <Repeat size={14} className="recurring-icon" style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle', color: '#6366f1' }} />}
+                                                                {service.title}
+                                                            </p>
+                                                            <ChevronRight size={14} className="service-arrow" />
+                                                        </div>
+                                                        <div className="service-meta">
+                                                            <span className="service-meta-item">
+                                                                <Clock size={14} /> {service.time}
+                                                            </span>
+                                                            <span className="service-meta-item">
+                                                                <MapPin size={14} /> {service.location}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );

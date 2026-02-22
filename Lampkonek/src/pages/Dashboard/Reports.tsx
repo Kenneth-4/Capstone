@@ -285,31 +285,17 @@ export const Reports = () => {
         <div className="reports-content">
             {/* Header */}
             <header className="top-bar">
-                <div className="page-title">
+                <div className="page-title hide-mobile">
                     <h1>Attendance Report</h1>
                 </div>
 
                 <div className="reports-header-controls">
-                    <div className="filter-group" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <Filter size={16} style={{ color: '#6b7280' }} />
+                    <div className="filter-group">
+                        <Filter size={16} className="filter-icon" />
                         <select
                             className="date-filter-select"
                             value={dateFilter}
                             onChange={(e) => setDateFilter(e.target.value)}
-                            style={{
-                                padding: '0.5rem 2rem 0.5rem 0.75rem',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px',
-                                fontSize: '0.875rem',
-                                color: '#374151',
-                                backgroundColor: 'white',
-                                cursor: 'pointer',
-                                outline: 'none',
-                                appearance: 'none',
-                                backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%236b7280\' d=\'M6 9L1 4h10z\'/%3E%3C/svg%3E")',
-                                backgroundRepeat: 'no-repeat',
-                                backgroundPosition: 'right 0.5rem center'
-                            }}
                         >
                             <option>Today</option>
                             <option>This Week</option>
@@ -326,20 +312,6 @@ export const Reports = () => {
                         <Download size={16} />
                         <span>Export</span>
                     </button>
-
-                    <div style={{ width: '1px', height: '24px', backgroundColor: '#e5e7eb', margin: '0 0.5rem' }}></div>
-
-                    <div className="top-actions" style={{ marginLeft: 0 }}>
-                        {/* Reusing top-actions layout but embedded primarily for profile/settings if desired, or keep main header separate? 
-                            The image shows profile in top right corner separate from controls row for report.
-                            Let's follow standard dashboard header logic: Profile is always at top right. 
-                            The Report Specific controls (Search, Date, Export) are IN THE HEADER ROW? 
-                            Looking at image: Yes, "Attendance Report" on left, Controls on Right. Profile is likely ABOVE this level or handled by standard layout.
-                            However, in our Dashboard.tsx, the header is part of the page content.
-                         */}
-                        <button className="theme-toggle">
-                        </button>
-                    </div>
                 </div>
             </header>
 
@@ -525,7 +497,7 @@ export const Reports = () => {
                                 <th>Event</th>
                                 <th>Present</th>
                                 <th>Absent</th>
-                                <th>Total Members</th>
+                                <th className="hide-tablet">Total Members</th>
                                 <th>Attendance Rate</th>
                             </tr>
                         </thead>
@@ -539,12 +511,12 @@ export const Reports = () => {
                             ) : (
                                 paginatedLogs.map((log, index) => (
                                     <tr key={index}>
-                                        <td style={{ color: '#6b7280' }}>{log.date}</td>
-                                        <td style={{ fontWeight: 600 }}>{log.event}</td>
-                                        <td className="text-green">{log.present}</td>
-                                        <td className="text-red">{log.absent}</td>
-                                        <td>{log.total}</td>
-                                        <td>
+                                        <td data-label="Date" style={{ color: '#6b7280' }}>{log.date}</td>
+                                        <td data-label="Event" style={{ fontWeight: 600 }}>{log.event}</td>
+                                        <td data-label="Present" className="text-green">{log.present}</td>
+                                        <td data-label="Absent" className="text-red">{log.absent}</td>
+                                        <td data-label="Total" className="hide-tablet">{log.total}</td>
+                                        <td data-label="Rate">
                                             <div className="rate-bar-container">
                                                 <div className="progress-track">
                                                     <div className="progress-fill" style={{ width: `${log.rate}%` }}></div>

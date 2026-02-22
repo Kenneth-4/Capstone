@@ -191,9 +191,9 @@ export const MyProfile = () => {
                     <div className="profile-main-info">
                         <div className="profile-avatar-large">
                             {profile?.avatar_url ? (
-                                <img src={profile.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                <img src={profile.avatar_url} alt={displayName} className="p-avatar-img" />
                             ) : (
-                                <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                <div className="p-avatar-placeholder">
                                     {initials}
                                 </div>
                             )}
@@ -246,14 +246,14 @@ export const MyProfile = () => {
                         </div>
                         <div className="form-group">
                             <label className="form-label">Role</label>
-                            <input type="text" className="form-input" value={displayRole} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+                            <input type="text" className="form-input input-disabled" value={displayRole} disabled />
                         </div>
                     </div>
 
                     <div className="form-grid-2">
                         <div className="form-group">
                             <label className="form-label">Email Address</label>
-                            <input type="email" className="form-input" value={email} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+                            <input type="email" className="form-input input-disabled" value={email} disabled />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Phone Number</label>
@@ -285,8 +285,7 @@ export const MyProfile = () => {
                             <label className="form-label">Cluster</label>
                             <div style={{ position: 'relative' }}>
                                 <select
-                                    className="form-input"
-                                    style={{ appearance: 'none' }}
+                                    className="form-input select-custom"
                                     name="cluster"
                                     value={formData.cluster}
                                     onChange={handleInputChange}
@@ -297,12 +296,12 @@ export const MyProfile = () => {
                                         <option key={idx} value={c}>{c}</option>
                                     ))}
                                 </select>
-                                <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', pointerEvents: 'none' }}>▼</div>
+                                <div className="select-arrow">▼</div>
                             </div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <div className="section-footer">
                         <button
                             className="btn-primary"
                             onClick={handleSaveProfile}
@@ -315,7 +314,7 @@ export const MyProfile = () => {
 
                 {/* Change Password */}
                 <div className="profile-section-card">
-                    <div className="section-header" style={{ borderBottom: 'none', marginBottom: '1rem' }}>
+                    <div className="section-header no-border">
                         <h3 className="section-title">Change Password</h3>
                         <p className="section-subtitle">Ensure your account is using a long, random password to stay secure.</p>
                     </div>
@@ -357,7 +356,7 @@ export const MyProfile = () => {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <div className="section-footer">
                         <button
                             className="btn-primary"
                             onClick={handleChangePassword}

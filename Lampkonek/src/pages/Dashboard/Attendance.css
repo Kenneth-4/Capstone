@@ -184,6 +184,96 @@
     }
 }
 
+@media (max-width: 768px) {
+    .attendance-content {
+        gap: 1rem;
+    }
+
+    .attendance-grid {
+        display: flex;
+        flex-direction: column-reverse;
+        /* Put Right Panel (Charts) on top */
+        gap: 1.5rem;
+    }
+
+    .attendance-left-panel,
+    .attendance-right-panel {
+        width: 100%;
+    }
+
+    .top-bar {
+        display: none;
+        /* Already covered by mobile header in Dashboard */
+    }
+
+    .header-actions-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .action-buttons-group {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .action-buttons-group button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Hide export and print button on mobile */
+    .export-btn,
+    .print-btn {
+        display: none !important;
+    }
+
+    .attendance-filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1rem;
+    }
+
+    .search-wrapper {
+        max-width: 100%;
+    }
+
+    .filters-right {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .date-filter,
+    .event-filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .date-filter input,
+    .event-filter select {
+        width: 100%;
+    }
+
+    .attendance-table th:nth-child(3),
+    .attendance-table td:nth-child(3),
+    .attendance-table th:nth-child(4),
+    .attendance-table td:nth-child(4) {
+        display: none;
+        /* Hide Cluster and Event on very small screens to save space */
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table-legend-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
 /* Left Panel - Table Card */
 .table-card {
     background-color: white;

@@ -300,7 +300,6 @@ export const Reservation = () => {
 
     return (
         <div className="reservation-content">
-            {/* Header */}
             <header className="top-bar">
                 <div className="page-title">
                     <h1>Reservation</h1>
@@ -318,18 +317,20 @@ export const Reservation = () => {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         style={{ flex: 1 }}
                     />
-                    <button
-                        className="add-res-btn"
-                        onClick={() => setIsRecurringModalOpen(true)}
-                        style={{ backgroundColor: 'white', color: '#374151', border: '1px solid #e5e7eb' }}
-                    >
-                        <Repeat size={18} />
-                        Auto Events
-                    </button>
-                    <button className="add-res-btn" onClick={() => setIsModalOpen(true)}>
-                        <Plus size={18} />
-                        Add Reservation
-                    </button>
+                    <div className="desktop-res-actions">
+                        <button
+                            className="add-res-btn"
+                            onClick={() => setIsRecurringModalOpen(true)}
+                            style={{ backgroundColor: 'white', color: '#374151', border: '1px solid #e5e7eb' }}
+                        >
+                            <Repeat size={18} />
+                            Auto Events
+                        </button>
+                        <button className="add-res-btn" onClick={() => setIsModalOpen(true)}>
+                            <Plus size={18} />
+                            Add Reservation
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats */}
@@ -600,27 +601,17 @@ export const Reservation = () => {
                             </div>
 
                             {/* Action Buttons */}
-                            <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb', flexWrap: 'wrap' }}>
+                            <div className="res-modal-actions">
                                 {/* Delete Button - Available for all non-recurring reservations */}
                                 {!selectedReservation.isRecurring && (
                                     <button
                                         onClick={handleDelete}
                                         disabled={isUpdating}
+                                        className="res-action-btn delete"
                                         title="Delete reservation"
-                                        style={{
-                                            padding: '0.75rem',
-                                            backgroundColor: '#dc2626',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '0.5rem',
-                                            cursor: isUpdating ? 'not-allowed' : 'pointer',
-                                            opacity: isUpdating ? 0.6 : 1,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}
                                     >
                                         <Trash2 size={20} />
+                                        <span className="btn-text">Delete</span>
                                     </button>
                                 )}
 
@@ -629,21 +620,11 @@ export const Reservation = () => {
                                     <button
                                         onClick={handleEdit}
                                         disabled={isUpdating}
+                                        className="res-action-btn edit"
                                         title="Edit reservation"
-                                        style={{
-                                            padding: '0.75rem',
-                                            backgroundColor: '#3b82f6',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '0.5rem',
-                                            cursor: isUpdating ? 'not-allowed' : 'pointer',
-                                            opacity: isUpdating ? 0.6 : 1,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}
                                     >
                                         <Edit2 size={20} />
+                                        <span className="btn-text">Edit</span>
                                     </button>
                                 )}
 
@@ -653,36 +634,14 @@ export const Reservation = () => {
                                         <button
                                             onClick={() => handleStatusUpdate('REJECTED')}
                                             disabled={isUpdating}
-                                            style={{
-                                                flex: '1 1 auto',
-                                                padding: '0.75rem 1.5rem',
-                                                backgroundColor: '#ef4444',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '0.5rem',
-                                                fontSize: '1rem',
-                                                fontWeight: 500,
-                                                cursor: isUpdating ? 'not-allowed' : 'pointer',
-                                                opacity: isUpdating ? 0.6 : 1
-                                            }}
+                                            className="res-status-btn reject"
                                         >
                                             {isUpdating ? 'Updating...' : 'Reject'}
                                         </button>
                                         <button
                                             onClick={() => handleStatusUpdate('APPROVED')}
                                             disabled={isUpdating}
-                                            style={{
-                                                flex: '1 1 auto',
-                                                padding: '0.75rem 1.5rem',
-                                                backgroundColor: '#10b981',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '0.5rem',
-                                                fontSize: '1rem',
-                                                fontWeight: 500,
-                                                cursor: isUpdating ? 'not-allowed' : 'pointer',
-                                                opacity: isUpdating ? 0.6 : 1
-                                            }}
+                                            className="res-status-btn approve"
                                         >
                                             {isUpdating ? 'Updating...' : 'Approve'}
                                         </button>
@@ -693,6 +652,12 @@ export const Reservation = () => {
                     </div>
                 </div>
             )}
+            <button className="mobile-auto-btn" onClick={() => setIsRecurringModalOpen(true)}>
+                <Repeat size={24} />
+            </button>
+            <button className="mobile-add-btn" onClick={() => setIsModalOpen(true)}>
+                <Plus size={24} />
+            </button>
         </div>
     );
 };

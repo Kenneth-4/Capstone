@@ -3,7 +3,7 @@ import {
     Plus,
     Search,
     Printer,
-    Link as LinkIcon,
+    ClipboardList,
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -51,6 +51,11 @@ export const Attendance = () => {
     const [activeTab, setActiveTab] = useState<'All' | 'Onsite' | 'Online'>('Onsite');
 
     // Pagination State
+    const [visibleCount, setVisibleCount] = useState(window.innerWidth <= 768 ? 10 : 20);
+
+    const handleShowMore = () => {
+        setVisibleCount(prev => prev * 2);
+    };
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -304,7 +309,7 @@ export const Attendance = () => {
 
         return matchesSearch && matchesTab;
     });
-    const currentItems = filteredRecords.slice(0, 50);
+    const currentItems = filteredRecords.slice(0, visibleCount);
 
     // Chart Data Preparation
     const monthlyAttendanceData = useMemo(() => {
@@ -404,13 +409,13 @@ export const Attendance = () => {
                     <button className="btn-secondary" onClick={() => setIsAddModalOpen(true)}>
                         <Plus size={16} /> Add Online
                     </button>
-                    <button className="btn-secondary">
-                        <LinkIcon size={16} /> Form Link
+                    <button className="btn-primary" onClick={() => setIsChecklistOpen(true)}>
+                        <ClipboardList size={16} /> Take Attendance
                     </button>
                     <button className="btn-primary export-btn" onClick={handleExport}>
                         <Download size={16} /> Export
                     </button>
-                    <button className="btn-secondary" onClick={handlePrint}>
+                    <button className="btn-secondary print-btn" onClick={handlePrint}>
                         <Printer size={16} /> Print
                     </button>
                 </div>
@@ -532,6 +537,15 @@ export const Attendance = () => {
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* Show More Button */}
+                        {filteredRecords.length > visibleCount && (
+                            <div className="show-more-container" style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
+                                <button className="btn-secondary show-more-btn" onClick={handleShowMore}>
+                                    Show More ({filteredRecords.length - visibleCount} remaining)
+                                </button>
+                            </div>
+                        )}
 
                         {/* Legend / Footer */}
                         <div className="table-legend-footer">

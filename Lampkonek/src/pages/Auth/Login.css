@@ -78,6 +78,18 @@
     text-align: left;
 }
 
+.mobile-logo {
+    display: none;
+    margin-bottom: 1.5rem;
+}
+
+.mobile-logo img {
+    height: 100px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
+    animation: levitate 3s ease-in-out infinite;
+}
+
 .logo-small {
     display: flex;
     align-items: center;
@@ -537,9 +549,23 @@
 
 /* Response */
 @media (max-width: 1024px) {
+    .login-container {
+        overflow-y: auto;
+    }
+
     .login-left {
         width: 100%;
-        padding: 1.5rem;
+        min-height: 100vh;
+        padding: 3rem 1.5rem;
+    }
+
+    .login-header {
+        text-align: center;
+    }
+
+    .mobile-logo {
+        display: flex;
+        justify-content: center;
     }
 
     .login-right {
@@ -547,7 +573,48 @@
     }
 
     .update-icon-btn {
-        right: 1.5rem;
-        left: auto;
+        top: 1rem;
+        right: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-left {
+        padding: 4rem 1.25rem 2rem;
+    }
+
+    .login-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .login-header p {
+        font-size: 0.85rem;
+        margin-bottom: 2rem;
+    }
+
+    .input-wrapper input {
+        padding: 0.85rem 1rem 0.85rem 2.5rem;
+        font-size: 1rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .submit-btn {
+        padding: 1rem;
+        font-size: 1.1rem;
+        margin-top: 1.5rem;
+    }
+
+    .signup-text {
+        font-size: 0.85rem;
+    }
+
+    .support-section {
+        margin-top: 2rem;
+        padding-top: 1rem;
     }
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Eye, EyeOff, Copy, Check, Save } from 'lucide-react';
+import { Eye, EyeOff, Copy, Check, Save, X } from 'lucide-react';
 import './AddMemberModal.css';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
@@ -237,7 +237,9 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({ isOpen, onClose,
             <div className="modal-container">
                 <div className="modal-header">
                     <h2>{member ? 'Edit Member' : 'Add Member'}</h2>
-                    {/* Back button logic could go here if needed to behave like "Back" in prototype */}
+                    <button className="close-btn" onClick={onClose} type="button">
+                        <X size={20} />
+                    </button>
                 </div>
 
                 <div className="modal-scroll-content">

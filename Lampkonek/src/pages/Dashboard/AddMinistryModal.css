@@ -179,7 +179,61 @@
 }
 
 .ministry-btn-save:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
     transform: none;
+}
+
+/* Responsive Mobile Styles */
+@media (max-width: 640px) {
+    .ministry-modal-overlay {
+        align-items: flex-end;
+    }
+
+    .ministry-modal-content {
+        max-width: 100%;
+        margin: 0;
+        border-radius: 20px 20px 0 0;
+        height: 100vh;
+        max-height: 90vh;
+        animation: slideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUpMobile {
+        from {
+            transform: translateY(100%);
+        }
+
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .ministry-modal-header {
+        padding: 1.25rem 1rem;
+    }
+
+    .ministry-modal-body {
+        padding: 1.25rem 1rem;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .ministry-modal-footer {
+        padding: 1rem;
+        flex-direction: column;
+        background-color: white;
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .ministry-btn-save,
+    .ministry-btn-cancel {
+        width: 100%;
+        padding: 0.85rem;
+    }
+
+    .ministry-btn-save {
+        order: -1;
+    }
 }

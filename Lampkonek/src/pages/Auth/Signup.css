@@ -432,26 +432,52 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
+    .signup-container {
+        overflow-y: auto;
+    }
+
     .signup-right {
         width: 100%;
-        padding: 1.5rem;
+        min-height: 100vh;
+        padding: 3rem 1.5rem;
     }
 
     .signup-left {
         display: none;
     }
 
-    .update-icon-btn,
-    .moon-icon-wrapper {
-        position: absolute;
-        top: 1.5rem;
-    }
-
     .update-icon-btn {
-        right: 1.5rem;
+        top: 1rem;
+        right: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .signup-right {
+        padding: 4rem 1.25rem 2rem;
     }
 
-    .moon-icon-wrapper {
-        right: 1.5rem;
+    .signup-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .signup-header p {
+        font-size: 0.85rem;
+    }
+
+    .input-wrapper input,
+    .input-wrapper select {
+        padding: 0.85rem 1rem 0.85rem 2.5rem;
+        font-size: 1rem;
+    }
+
+    .submit-btn {
+        padding: 1rem;
+        font-size: 1.1rem;
+        margin-top: 1.5rem;
+    }
+
+    .login-link {
+        font-size: 0.85rem;
     }
 }

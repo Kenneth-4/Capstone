@@ -41,6 +41,12 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
     const [members, setMembers] = useState<Member[]>([]);
     const [approvedEvents, setApprovedEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [visibleCount, setVisibleCount] = useState(window.innerWidth <= 768 ? 10 : 20);
+
+    const handleShowMore = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent closing dropdown
+        setVisibleCount(prev => prev * 2);
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -78,6 +84,8 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
     const filteredMembers = members.filter(member =>
         member.full_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const displayedMembers = filteredMembers.slice(0, visibleCount);
 
     const handleMemberSelect = (member: Member) => {
         setMemberId(member.id);
@@ -224,16 +232,36 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
                                 />
                                 {isDropdownOpen && (
                                     <div className="autocomplete-dropdown">
-                                        {filteredMembers.length > 0 ? (
-                                            filteredMembers.map(member => (
-                                                <div
-                                                    key={member.id}
-                                                    className="autocomplete-item"
-                                                    onClick={() => handleMemberSelect(member)}
-                                                >
-                                                    {member.full_name}
-                                                </div>
-                                            ))
+                                        {displayedMembers.length > 0 ? (
+                                            <>
+                                                {displayedMembers.map(member => (
+                                                    <div
+                                                        key={member.id}
+                                                        className="autocomplete-item"
+                                                        onClick={() => handleMemberSelect(member)}
+                                                    >
+                                                        {member.full_name}
+                                                    </div>
+                                                ))}
+                                                {filteredMembers.length > visibleCount && (
+                                                    <div
+                                                        className="autocomplete-show-more"
+                                                        onClick={handleShowMore}
+                                                        style={{
+                                                            padding: '0.75rem',
+                                                            textAlign: 'center',
+                                                            color: '#6366f1',
+                                                            fontSize: '0.85rem',
+                                                            fontWeight: 600,
+                                                            cursor: 'pointer',
+                                                            borderTop: '1px solid #f3f4f6',
+                                                            backgroundColor: '#f9fafb'
+                                                        }}
+                                                    >
+                                                        Show More ({filteredMembers.length - visibleCount} remaining)
+                                                    </div>
+                                                )}
+                                            </>
                                         ) : (
                                             <div className="no-results">No members found</div>
                                         )}

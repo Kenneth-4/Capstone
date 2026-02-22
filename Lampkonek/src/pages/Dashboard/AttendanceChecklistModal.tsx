@@ -38,6 +38,12 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
     });
     const [selectedEvent, setSelectedEvent] = useState('');
     const [approvedEvents, setApprovedEvents] = useState<any[]>([]);
+    const [visibleCount, setVisibleCount] = useState(window.innerWidth <= 768 ? 10 : 20);
+    const [showFilters, setShowFilters] = useState(window.innerWidth > 768);
+
+    const handleShowMore = () => {
+        setVisibleCount(prev => prev * 2);
+    };
 
     React.useEffect(() => {
         if (isOpen && selectedDate && selectedEvent) {
@@ -182,6 +188,8 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
         return matchesSearch && matchesCluster;
     });
 
+    const displayedEmployees = filteredEmployees.slice(0, visibleCount);
+
     const handleAttendanceChange = (id: string, type: 'Present' | 'Absent') => {
         setEmployees(employees.map(emp => {
             if (emp.id !== id) return emp;
@@ -255,49 +263,72 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
         <div className="modal-backdrop">
             <div className="modal-container checklist-modal">
                 <div className="modal-header">
-                    <h2>Attendance Checklist</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <h2>Attendance Checklist</h2>
+                        <button
+                            className={`filter-toggle-btn ${showFilters ? 'active' : ''}`}
+                            onClick={() => setShowFilters(!showFilters)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.4rem 0.8rem',
+                                borderRadius: '6px',
+                                border: '1px solid #e5e7eb',
+                                background: showFilters ? '#f3f4f6' : 'white',
+                                fontSize: '0.85rem',
+                                color: '#4b5563',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <Filter size={16} />
+                            {showFilters ? 'Hide Filters' : 'Show Filters'}
+                        </button>
+                    </div>
                     <button className="close-btn" onClick={onClose}>
                         <X size={24} />
                     </button>
                 </div>
 
-                <div className="checklist-controls" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
-                        <div className="form-group" style={{ flex: 1 }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#4b5563', marginBottom: '0.25rem', display: 'block' }}>Date</label>
-                            <input
-                                type="date"
-                                className="form-input"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '0.375rem' }}
-                            />
+                <div className="checklist-controls" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: showFilters ? '1rem 2rem' : '0.5rem 2rem' }}>
+                    {showFilters && (
+                        <div style={{ display: 'flex', gap: '1rem', width: '100%' }} className="responsive-controls-row">
+                            <div className="form-group" style={{ flex: 1 }}>
+                                <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#4b5563', marginBottom: '0.25rem', display: 'block' }}>Date</label>
+                                <input
+                                    type="date"
+                                    className="form-input"
+                                    value={selectedDate}
+                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '0.375rem' }}
+                                />
+                            </div>
+                            <div className="form-group" style={{ flex: 1 }}>
+                                <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#4b5563', marginBottom: '0.25rem', display: 'block' }}>Event</label>
+                                <select
+                                    className="form-input"
+                                    value={selectedEvent}
+                                    onChange={(e) => setSelectedEvent(e.target.value)}
+                                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '0.375rem' }}
+                                    disabled={approvedEvents.length === 0}
+                                >
+                                    {approvedEvents.length > 0 ? (
+                                        approvedEvents.map((event, index) => (
+                                            <option key={index} value={event.event_title}>
+                                                {event.event_title}
+                                            </option>
+                                        ))
+                                    ) : (
+                                        <option value="">No approved events for this date</option>
+                                    )}
+                                </select>
+                            </div>
                         </div>
-                        <div className="form-group" style={{ flex: 1 }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#4b5563', marginBottom: '0.25rem', display: 'block' }}>Event</label>
-                            <select
-                                className="form-input"
-                                value={selectedEvent}
-                                onChange={(e) => setSelectedEvent(e.target.value)}
-                                style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '0.375rem' }}
-                                disabled={approvedEvents.length === 0}
-                            >
-                                {approvedEvents.length > 0 ? (
-                                    approvedEvents.map((event, index) => (
-                                        <option key={index} value={event.event_title}>
-                                            {event.event_title}
-                                        </option>
-                                    ))
-                                ) : (
-                                    <option value="">No approved events for this date</option>
-                                )}
-                            </select>
-                        </div>
-                    </div>
+                    )}
 
-                    <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
-                        <div className="search-bar" style={{ flex: 2 }}>
-                            <Search size={20} className="search-icon" />
+                    <div style={{ display: 'flex', gap: '1rem', width: '100%' }} className="responsive-controls-row">
+                        <div className="checklist-search-bar" style={{ flex: 2 }}>
+                            <Search size={20} className="checklist-search-icon" />
                             <input
                                 type="text"
                                 placeholder="Search by name..."
@@ -305,17 +336,19 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <div className="filter-dropdown" style={{ flex: 1 }}>
-                            <Filter size={20} className="filter-icon" />
-                            <select
-                                value={clusterFilter}
-                                onChange={(e) => setClusterFilter(e.target.value)}
-                            >
-                                {clusters.map(cluster => (
-                                    <option key={cluster} value={cluster}>{cluster}</option>
-                                ))}
-                            </select>
-                        </div>
+                        {showFilters && (
+                            <div className="checklist-filter-dropdown" style={{ flex: 1 }}>
+                                <Filter size={20} className="checklist-filter-icon" />
+                                <select
+                                    value={clusterFilter}
+                                    onChange={(e) => setClusterFilter(e.target.value)}
+                                >
+                                    {clusters.map(cluster => (
+                                        <option key={cluster} value={cluster}>{cluster}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -347,7 +380,7 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredEmployees.map(emp => (
+                            {displayedEmployees.map(emp => (
                                 <tr key={emp.id}>
                                     <td className="employee-info">{emp.name}</td>
                                     <td className="employee-ministry">{emp.cluster}</td>
@@ -380,6 +413,14 @@ export const AttendanceChecklistModal: React.FC<AttendanceChecklistModalProps> =
                             ))}
                         </tbody>
                     </table>
+
+                    {filteredEmployees.length > visibleCount && (
+                        <div className="show-more-container" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'center', borderTop: '1px solid #f3f4f6' }}>
+                            <button className="btn-secondary show-more-btn" onClick={handleShowMore}>
+                                Show More ({filteredEmployees.length - visibleCount} remaining)
+                            </button>
+                        </div>
+                    )}
                 </div>
 
 

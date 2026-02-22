@@ -216,3 +216,126 @@
         grid-template-columns: 1fr;
     }
 }
+
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none !important;
+    }
+
+    .mr-controls-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mr-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .mr-stat-card {
+        padding: 1rem;
+    }
+
+    .mr-stat-value {
+        font-size: 1.4rem;
+    }
+
+    .mr-pie-content {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .mr-legend {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    /* Table to Card */
+    .mr-table,
+    .mr-table thead,
+    .mr-table tbody,
+    .mr-table th,
+    .mr-table td,
+    .mr-table tr {
+        display: block;
+    }
+
+    .mr-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .mr-table tr {
+        margin-bottom: 1rem;
+        border: 1px solid #f3f4f6;
+        border-radius: 12px;
+        background: #fdfdfd;
+        padding: 0.5rem 0;
+    }
+
+    .mr-table td {
+        border: none;
+        position: relative;
+        padding-left: 50%;
+        text-align: right;
+        min-height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 1.5rem;
+    }
+
+    .mr-table td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 1.5rem;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .mr-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mr-chart-header {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
+
+.mr-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.mr-filter-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.mr-clear-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    background-color: #f3f4f6;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.mr-clear-btn:hover {
+    background-color: #e5e7eb;
+}
