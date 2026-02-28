@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.5.0</span>
+                            <span className="version-number">v1.6.0</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,22 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">February 28, 2026</span>
+                                <h4 className="update-title">Attendance & Reports Polish 📊</h4>
+                                <p>We've massively improved the Attendance and Reports pages with better navigation, export tools, and professional document printing.</p>
+                                <ul className="feature-list">
+                                    <li>📄 <strong>Real Pagination:</strong> Replaced the old "Show More" functionality with a robust, navigable pagination system on the Attendance page.</li>
+                                    <li>🖨️ <strong>Print-Ready Reports:</strong> Added a clean, black-and-white document style for printing both Attendance and Member Reports without dashboard clutter.</li>
+                                    <li>📥 <strong>CSV Data Export:</strong> You can now export your filtered reports into neatly formatted `.csv` files natively compatible with spreadsheet software like Excel.</li>
+                                    <li>🔘 <strong>Action Consolidation:</strong> Simplified the Attendance UI by merging "Add Onsite" and "Add Online" into a single, smart "Add Attendance" button.</li>
+                                    <li>🎨 <strong>Breathing Room:</strong> Increased margins and gaps across the Reports dashboards for a premium, less-cramped view.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 22, 2026 (Evening)</span>
                                 <h4 className="update-title">Premium Dashboard Standardization & UI Polish ✨</h4>

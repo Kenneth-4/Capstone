@@ -1,9 +1,9 @@
 import {
-    Download,
     Plus,
     Search,
-    Printer,
     ClipboardList,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -54,11 +54,8 @@ export const Attendance = () => {
     const [activeTab, setActiveTab] = useState<'All' | 'Onsite' | 'Online'>('Onsite');
 
     // Pagination State
-    const [visibleCount, setVisibleCount] = useState(window.innerWidth <= 768 ? 10 : 20);
-
-    const handleShowMore = () => {
-        setVisibleCount(prev => prev * 2);
-    };
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -314,7 +311,47 @@ export const Attendance = () => {
 
         return matchesSearch && matchesTab;
     });
-    const currentItems = filteredRecords.slice(0, visibleCount);
+
+    // Pagination Logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredRecords.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+
+    const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+    // Reset to page 1 when search or filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, activeTab, selectedEvent, dateFrom, dateTo]);
+
+    // Generate page numbers for pagination
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisiblePages = 5;
+
+        if (totalPages <= maxVisiblePages) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            // Always show first page
+            pages.push(1);
+
+            if (currentPage > 3) pages.push('...');
+
+            const start = Math.max(2, currentPage - 1);
+            const end = Math.min(totalPages - 1, currentPage + 1);
+
+            for (let i = start; i <= end; i++) {
+                if (!pages.includes(i)) pages.push(i);
+            }
+
+            if (currentPage < totalPages - 2) pages.push('...');
+
+            // Always show last page
+            if (!pages.includes(totalPages)) pages.push(totalPages);
+        }
+        return pages;
+    };
 
     // Chart Data Preparation
     const monthlyAttendanceData = useMemo(() => {
@@ -364,6 +401,9 @@ export const Attendance = () => {
         return { all, online, onsite };
     }, [attendanceRecords]);
 
+
+    {/* 
+    
     const handleExport = () => {
         const headers = ["Name", "Status", "Cluster", "Event", "Date", "Remarks"];
         const csvData = filteredRecords.map(record => [
@@ -390,10 +430,14 @@ export const Attendance = () => {
         link.click();
         document.body.removeChild(link);
     };
-
+        
     const handlePrint = () => {
         window.print();
-    };
+    };   
+
+
+    */}
+
 
     return (
         <div className="attendance-content">
@@ -410,23 +454,25 @@ export const Attendance = () => {
             <div className="header-actions-row">
                 <div style={{ flex: 1 }}></div> {/* Spacer */}
                 <div className="action-buttons-group">
-                    <button className="btn-secondary" onClick={() => { setAddModalMode('Onsite'); setIsAddModalOpen(true); }}>
-                        <Plus size={16} /> Add Onsite
-                    </button>
                     {profile?.role !== 'Member' && profile?.role !== 'Visitor' && (
                         <>
-                            <button className="btn-secondary" onClick={() => { setAddModalMode('Online'); setIsAddModalOpen(true); }}>
-                                <Plus size={16} /> Add Online
+                            <button className="btn-secondary" onClick={() => { setAddModalMode('Onsite'); setIsAddModalOpen(true); }}>
+                                <Plus size={16} /> Add Attendance
                             </button>
                             <button className="btn-primary" onClick={() => setIsChecklistOpen(true)}>
                                 <ClipboardList size={16} /> Take Attendance
                             </button>
+                            {/* 
+                            
                             <button className="btn-primary export-btn" onClick={handleExport}>
                                 <Download size={16} /> Export
                             </button>
                             <button className="btn-secondary print-btn" onClick={handlePrint}>
                                 <Printer size={16} /> Print
                             </button>
+                            
+                            */}
+
                         </>
                     )}
                 </div>
@@ -551,14 +597,63 @@ export const Attendance = () => {
                             </table>
                         </div>
 
-                        {/* Show More Button */}
-                        {filteredRecords.length > visibleCount && (
-                            <div className="show-more-container" style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
-                                <button className="btn-secondary show-more-btn" onClick={handleShowMore}>
-                                    Show More ({filteredRecords.length - visibleCount} remaining)
-                                </button>
+                        {/* Pagination UI */}
+                        <div className="pagination-container">
+                            <div className="pagination-info">
+                                Showing {filteredRecords.length === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredRecords.length)} of {filteredRecords.length} entries
                             </div>
-                        )}
+
+                            <div className="pagination-controls">
+                                <div className="per-page-wrapper">
+                                    <span>Per Page</span>
+                                    <select
+                                        className="per-page-select"
+                                        value={itemsPerPage}
+                                        onChange={(e) => {
+                                            setItemsPerPage(Number(e.target.value));
+                                            setCurrentPage(1);
+                                        }}
+                                    >
+                                        <option value={5}>5</option>
+                                        <option value={10}>10</option>
+                                        <option value={20}>20</option>
+                                        <option value={50}>50</option>
+                                    </select>
+                                </div>
+
+                                <div className="pagination-pages">
+                                    <button
+                                        className="page-btn"
+                                        onClick={() => paginate(Math.max(1, currentPage - 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+
+                                    {getPageNumbers().map((page, index) => (
+                                        typeof page === 'number' ? (
+                                            <button
+                                                key={index}
+                                                className={`page-btn ${currentPage === page ? 'active' : ''}`}
+                                                onClick={() => paginate(page)}
+                                            >
+                                                {page}
+                                            </button>
+                                        ) : (
+                                            <span key={index} className="pagination-ellipsis">{page}</span>
+                                        )
+                                    ))}
+
+                                    <button
+                                        className="page-btn"
+                                        onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                                        disabled={currentPage === totalPages || totalPages === 0}
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Legend / Footer */}
                         <div className="table-legend-footer">

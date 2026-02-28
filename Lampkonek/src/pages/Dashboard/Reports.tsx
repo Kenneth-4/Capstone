@@ -3,6 +3,8 @@ import {
     Filter,
     ChevronLeft,
     ChevronRight,
+    Printer,
+    Download
 } from 'lucide-react';
 import {
     LineChart,
@@ -15,7 +17,6 @@ import {
 } from 'recharts';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
-import { UserProfile } from '../../components/UserProfile';
 import './Reports.css';
 
 // Interfaces
@@ -281,6 +282,28 @@ export const Reports = () => {
         currentPage * itemsPerPage
     );
 
+    const handleExport = () => {
+        const headers = ['Date', 'Event', 'Present', 'Absent', 'Total', 'Rate'];
+        const csvContent = [
+            headers.join(','),
+            ...filteredLogs.map(log => {
+                const dateObj = new Date(log.date);
+                const formattedDate = isNaN(dateObj.getTime()) ? log.date : `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
+                return `"${formattedDate}","${log.event}",${log.present},${log.absent},${log.total},${log.rate}%`;
+            })
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `attendance_report_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="reports-content dashboard-view-content">
             {/* Header */}
@@ -288,9 +311,6 @@ export const Reports = () => {
                 <div className="page-title hide-mobile">
                     <h1>Attendance Report</h1>
                     <p>View historical data and growth trends.</p>
-                </div>
-                <div className="top-actions">
-                    <UserProfile />
                 </div>
             </header>
             <div className="reports-header-controls">
@@ -312,7 +332,16 @@ export const Reports = () => {
                     </select>
                 </div>
 
-
+                <div className="action-buttons-group">
+                    <button className="btn-secondary print-btn" onClick={() => window.print()}>
+                        <Printer size={16} />
+                        <span className="hide-mobile">Print</span>
+                    </button>
+                    <button className="btn-primary export-btn" onClick={handleExport}>
+                        <Download size={16} />
+                        <span className="hide-mobile">Export</span>
+                    </button>
+                </div>
             </div>
 
             <div className="reports-container">

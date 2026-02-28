@@ -339,3 +339,106 @@
 .mr-clear-btn:hover {
     background-color: #e5e7eb;
 }
+
+/* Print Styles */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .member-report-content,
+    .member-report-content * {
+        visibility: visible;
+        color: #000 !important;
+    }
+
+    .member-report-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* Hide Controls and Charts for Document Feel */
+    .top-actions,
+    .mr-controls-row,
+    .action-buttons-group,
+    .mr-charts-grid,
+    .mr-link,
+    .mr-stat-meta,
+    .pie-content {
+        display: none !important;
+    }
+
+    .page-title h1 {
+        font-size: 1.5rem !important;
+        margin-bottom: 2rem !important;
+        border-bottom: 2px solid #000;
+        padding-bottom: 0.5rem;
+    }
+
+    .mr-stats-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .mr-stat-card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+        margin: 0 !important;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mr-stat-title {
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+    }
+
+    .mr-stat-title::after {
+        content: ":";
+    }
+
+    .mr-stat-value {
+        font-size: 1.2rem !important;
+        font-weight: 400 !important;
+    }
+
+    .mr-list-section {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+
+    .mr-table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+
+    .mr-table th,
+    .mr-table td {
+        border: 1px solid #000 !important;
+        padding: 0.5rem !important;
+        background: transparent !important;
+    }
+
+    .status-pill {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        font-weight: normal !important;
+    }
+
+    .mr-list-header {
+        margin-bottom: 1rem !important;
+    }
+}

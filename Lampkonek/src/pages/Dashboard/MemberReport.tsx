@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import {
     ChevronDown,
     TrendingUp,
-    CheckCircle2
+    CheckCircle2,
+    Printer,
+    Download
 } from 'lucide-react';
 import {
     PieChart,
@@ -188,6 +190,28 @@ export const MemberReport = () => {
         return clusterMatch;
     });
 
+    const handleExport = () => {
+        const headers = ['Name', 'Status', 'Ministry', 'Cluster', 'Join Date'];
+        const csvContent = [
+            headers.join(','),
+            ...filteredMembers.map(m => {
+                const dateObj = new Date(m.joinDate);
+                const formattedDate = (isNaN(dateObj.getTime()) || m.joinDate === 'N/A') ? m.joinDate : `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
+                return `"${m.name}","${m.status}","${m.ministry}","${m.cluster}","${formattedDate}"`;
+            })
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `members_report_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="member-report-content">
             {/* Header */}
@@ -222,6 +246,16 @@ export const MemberReport = () => {
                                 </button>
                             )}
                         </div>
+                    </div>
+                    <div className="action-buttons-group" style={{ display: 'flex', gap: '0.75rem' }}>
+                        <button className="btn-secondary print-btn" onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'white', border: '1px solid #d1d5db', color: '#6366f1', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <Printer size={16} />
+                            <span className="hide-mobile">Print</span>
+                        </button>
+                        <button className="btn-primary export-btn" onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#6366f1', border: '1px solid #6366f1', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(99,102,241,0.4)' }}>
+                            <Download size={16} />
+                            <span className="hide-mobile">Export</span>
+                        </button>
                     </div>
                 </div>
 
