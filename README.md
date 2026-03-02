@@ -61,8 +61,14 @@ Go to your Supabase Project -> **SQL Editor** and execute the scripts found in t
 4. `supabase_ministries_setup.sql`: Set up ministry management.
 5. `create_reservations_table.sql`: Reservation system.
 6. `supabase_attendance_setup.sql`: Attendance tracking logic.
+7. `supabase_settings_setup.sql`: App settings and announcements.
 
-### 2. Authentication
+### 2. Promote to Administrator
+After creating your account via the app, you need to manually promote your user to an Administrator:
+- Run `set_administrator.sql` in the SQL Editor.
+- **Important:** Edit the file to replace `'your-email@example.com'` with your actual email address before running.
+
+### 3. Authentication
 - Enable **Email/Password** provider in Supabase Auth settings.
 - Ensure the `handle_new_user` trigger (in `supabase_setup.sql`) is active to automatically create profiles on signup.
 
