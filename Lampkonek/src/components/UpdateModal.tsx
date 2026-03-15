@@ -44,7 +44,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="current-version-card">
                         <div className="version-left">
                             <span className="version-label">Current Version</span>
-                            <span className="version-number">v1.6.0</span>
+                            <span className="version-number">v1.7.0</span>
                         </div>
                         <div className="version-status">
                             <span className="status-dot"></span>
@@ -55,6 +55,22 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, onClose }) => {
                     <div className="updates-timeline">
                         <div className="timeline-item">
                             <div className="timeline-marker latest"></div>
+                            <div className="timeline-content">
+                                <span className="update-date">March 15, 2026</span>
+                                <h4 className="update-title">Automated QR Attendance & Analytics Polish 📸</h4>
+                                <p>We've completely modernized how you take attendance. No more manual clicking—members can now simply scan a QR code! We also polished member analytics.</p>
+                                <ul className="feature-list">
+                                    <li>📸 <strong>QR Code Scanning:</strong> Admins can generate a live QR code per event. Members can scan it with their device to automatically log their attendance.</li>
+                                    <li>⚡ <strong>Real-Time Refresh:</strong> The attendance board updates instantly the second a member scans the QR code—no page reloads needed!</li>
+                                    <li>📊 <strong>Smart Event Tallies:</strong> Member profiles now break down their attendance ratio specific to recurring automatic events (e.g., Sunday Service vs. Prayer Meeting).</li>
+                                    <li>🎯 <strong>Streamlined Statuses:</strong> We removed "Late" and "Excused" to enforce a stricter, cleaner "Present" or "Absent" tracking logic.</li>
+                                    <li>🔒 <strong>Date Locking:</strong> The manual Add Attendance modal is now locked to the current real-world day, preventing accidental historical logging errors.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item">
+                            <div className="timeline-marker"></div>
                             <div className="timeline-content">
                                 <span className="update-date">February 28, 2026</span>
                                 <h4 className="update-title">Attendance & Reports Polish 📊</h4>

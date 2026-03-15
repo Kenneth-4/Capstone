@@ -4,13 +4,19 @@ import {
     ClipboardList,
     ChevronLeft,
     ChevronRight,
+    QrCode,
+    Scan,
+    RefreshCw
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
 import { TakeAttendanceModal } from './TakeAttendanceModal';
 import { AttendanceChecklistModal } from './AttendanceChecklistModal';
 import { AddAttendanceModal } from './AddAttendanceModal';
 import { initializeRecurringEvents } from '../../utils/initializeRecurringEvents';
+import { GenerateQRModal } from './GenerateQRModal';
+import { ScanQRModal } from './ScanQRModal';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 import './Attendance.css';
 import { UserProfile } from '../../components/UserProfile';
@@ -39,6 +45,8 @@ export const Attendance = () => {
     const [isChecklistOpen, setIsChecklistOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [addModalMode, setAddModalMode] = useState<'Onsite' | 'Online'>('Onsite');
+    const [isGenerateQROpen, setIsGenerateQROpen] = useState(false);
+    const [isScanQROpen, setIsScanQROpen] = useState(false);
     const hasRunAutomation = useState(false);
 
     // State for data
@@ -102,6 +110,45 @@ export const Attendance = () => {
             hasRunAutomation[1](true);
         }
     }, []);
+
+    // Realtime listener for QR scans
+    useEffect(() => {
+        if (!profile || profile.role === 'Member' || profile.role === 'Visitor') return;
+
+        const channel = supabase
+            .channel('qr-attendance-channel')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'attendance' },
+                async (payload) => {
+                    const newRecord = payload.new;
+                    if (newRecord.remarks === 'QR Scanned') {
+                        const { data } = await supabase.from('profiles').select('full_name').eq('id', newRecord.user_id).single();
+                        const userName = data?.full_name || 'A member';
+                        toast.success(`${userName} successfully scanned the QR code!`);
+                        fetchAttendance();
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'attendance' },
+                async (payload) => {
+                    const newRecord = payload.new;
+                    if (newRecord.remarks === 'QR Scanned') {
+                        const { data } = await supabase.from('profiles').select('full_name').eq('id', newRecord.user_id).single();
+                        const userName = data?.full_name || 'A member';
+                        toast.success(`${userName} successfully scanned the QR code!`);
+                        fetchAttendance();
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [profile]);
 
     const runAutomations = async () => {
         await processAutomaticAbsences();
@@ -454,13 +501,23 @@ export const Attendance = () => {
             <div className="header-actions-row">
                 <div style={{ flex: 1 }}></div> {/* Spacer */}
                 <div className="action-buttons-group">
-                    {profile?.role !== 'Member' && profile?.role !== 'Visitor' && (
+                    {(profile?.role === 'Member' || profile?.role === 'Visitor') ? (
+                        <button className="btn-primary" onClick={() => setIsScanQROpen(true)}>
+                            <Scan size={16} /> Scan QR Attendance
+                        </button>
+                    ) : (
                         <>
+                            <button className="btn-secondary qr-btn" onClick={() => setIsGenerateQROpen(true)}>
+                                <QrCode size={16} /> Generate QR
+                            </button>
                             <button className="btn-secondary" onClick={() => { setAddModalMode('Onsite'); setIsAddModalOpen(true); }}>
                                 <Plus size={16} /> Add Attendance
                             </button>
                             <button className="btn-primary" onClick={() => setIsChecklistOpen(true)}>
                                 <ClipboardList size={16} /> Take Attendance
+                            </button>
+                            <button className="btn-secondary" onClick={fetchAttendance}>
+                                <RefreshCw size={16} /> Refresh
                             </button>
                             {/* 
                             
@@ -716,6 +773,8 @@ export const Attendance = () => {
                 onClose={() => setIsAddModalOpen(false)}
                 initialMode={addModalMode}
             />
+            <GenerateQRModal isOpen={isGenerateQROpen} onClose={() => setIsGenerateQROpen(false)} />
+            {profile && <ScanQRModal isOpen={isScanQROpen} onClose={() => setIsScanQROpen(false)} userId={profile.id} />}
         </div>
     );
 };

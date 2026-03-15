@@ -34,7 +34,7 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
     const dropdownRef = useRef<HTMLDivElement>(null);
 
 
-    const [date, setDate] = useState(() => {
+    const [date] = useState(() => {
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -288,8 +288,6 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
                                 >
                                     <option value="Present">Present</option>
                                     <option value="Absent">Absent</option>
-                                    <option value="Late">Late</option>
-                                    <option value="Excused">Excused</option>
                                 </select>
                             </div>
                             <div className="form-group">
@@ -306,7 +304,7 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
                         </div>
 
                         <div className="form-group">
-                            <label>Event <span className="required">*</span></label>
+                            <label>Today's Event ({new Date(date).toLocaleDateString()}) <span className="required">*</span></label>
                             <select
                                 className="form-input"
                                 value={selectedEvent}
@@ -321,23 +319,14 @@ export const AddAttendanceModal: React.FC<AddAttendanceModalProps> = ({ isOpen, 
                                         </option>
                                     ))
                                 ) : (
-                                    <option value="">No approved events for this date</option>
+                                    <option value="">No approved events for today</option>
                                 )}
                             </select>
                         </div>
 
                         {/* Cluster is derived from member profile, no need to ask */}
 
-                        <div className="form-group">
-                            <label>Date <span className="required">*</span></label>
-                            <input
-                                type="date"
-                                className="form-input"
-                                value={date}
-                                onChange={(e) => setDate(e.target.value)}
-                                required
-                            />
-                        </div>
+
 
                         <div className="modal-footer-simple">
                             <button type="button" className="btn-cancel" onClick={onClose} disabled={loading}>Cancel</button>

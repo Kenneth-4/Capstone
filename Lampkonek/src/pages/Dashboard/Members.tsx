@@ -48,6 +48,11 @@ interface MemberStats {
         event_name: string;
         status: string;
     }[];
+    eventTallies: {
+        event_name: string;
+        present: number;
+        absent: number;
+    }[];
 }
 
 const getStatusClass = (status: string) => {
@@ -178,6 +183,16 @@ export const Members = () => {
     const fetchMemberStats = async (memberId: string) => {
         setStatsLoading(true);
         try {
+            // Fetch recurring events
+            const { data: settingsData } = await supabase
+                .from('app_settings')
+                .select('value')
+                .eq('key', 'recurring_events')
+                .single();
+
+            const recurringEvents = settingsData?.value ? JSON.parse(settingsData.value) : [];
+            const automaticEventTitles = new Set(recurringEvents.filter((e: any) => e.enabled).map((e: any) => e.title));
+
             // Fetch attendance history
             const { data: attendanceData, error } = await supabase
                 .from('attendance')
@@ -190,12 +205,25 @@ export const Members = () => {
             if (attendanceData) {
                 const present = attendanceData.filter(a => a.status === 'Present').length;
                 const absent = attendanceData.filter(a => a.status === 'Absent').length;
-                const total = present + absent; // Ignoring 'Late' or treating as present/absent? Assuming 'Late' is present for simplicity or just counting specific statuses
+                const eventTalliesMap: Record<string, { present: number; absent: number }> = {};
+                attendanceData.forEach(a => {
+                    const evt = a.event || 'Unknown Event';
+                    if (automaticEventTitles.has(evt)) {
+                        if (!eventTalliesMap[evt]) {
+                            eventTalliesMap[evt] = { present: 0, absent: 0 };
+                        }
+                        if (a.status === 'Present') eventTalliesMap[evt].present++;
+                        if (a.status === 'Absent') eventTalliesMap[evt].absent++;
+                    }
+                });
 
-                // If there are other statuses like 'Late', we should clarify. Assuming simple model for now.
-                // Let's assume 'Late' counts as present for ratio, but let's stick to strict Present/Absent if that's what we have.
-                // Or maybe the user has 'Late' separate. The prompt for history said 'Present', 'Absent'.
+                const eventTallies = Object.entries(eventTalliesMap).map(([name, counts]) => ({
+                    event_name: name,
+                    present: counts.present,
+                    absent: counts.absent
+                }));
 
+                const total = present + absent;
                 const ratio = total > 0 ? Math.round((present / total) * 100) : 0;
 
                 setMemberStats({
@@ -204,11 +232,10 @@ export const Members = () => {
                     ratio,
                     recentHistory: attendanceData.slice(0, 5).map(r => ({
                         date: r.date,
-                        event_name: r.event_name || 'Event', // attendance table might not have event_name directly if it's foreign key, but previously we just stored date.
-                        // Wait, previous messages showed attendance table structure check.
-                        // Let's assume basic structure for now. If event_name is missing, fallback to 'Service'.
+                        event_name: r.event || 'Event', 
                         status: r.status
-                    }))
+                    })),
+                    eventTallies
                 });
             }
         } catch (error) {
@@ -409,6 +436,24 @@ export const Members = () => {
                                     <div className="stat-box absent">
                                         <span className="stat-number">{memberStats?.absent || 0}</span>
                                         <span className="stat-desc">Absent</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tally per Event */}
+                            {!statsLoading && memberStats?.eventTallies && memberStats.eventTallies.length > 0 && (
+                                <div className="event-tallies" style={{ marginTop: '1.5rem', borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
+                                    <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}>Tally by Event</h4>
+                                    <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                        {memberStats.eventTallies.map((tally, idx) => (
+                                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f9fafb', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#4b5563' }}>{tally.event_name}</span>
+                                                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem' }}>
+                                                    <span style={{ color: '#10b981', fontWeight: 600 }}>{tally.present} P</span>
+                                                    <span style={{ color: '#ef4444', fontWeight: 600 }}>{tally.absent} A</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}

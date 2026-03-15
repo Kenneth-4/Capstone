@@ -258,8 +258,6 @@ export const TakeAttendanceModal: React.FC<TakeAttendanceModalProps> = ({ isOpen
                                 >
                                     <option value="Present">Present</option>
                                     <option value="Absent">Absent</option>
-                                    <option value="Late">Late</option>
-                                    <option value="Excused">Excused</option>
                                 </select>
                             </div>
                         </div>
